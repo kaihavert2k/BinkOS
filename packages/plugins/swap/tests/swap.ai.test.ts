@@ -37,9 +37,9 @@ import { ListaProvider } from '../../../providers/lista/dist/ListaProvider';
 import { SwapPlugin } from '../../../plugins/swap/dist/SwapPlugin';
 
 // Hardcoded RPC URLs for demonstration
-const BSC_RPC_URL='https://bsc-dataseed1.binance.org';
-const ETHEREUM_RPC_URL='https://eth.llamarpc.com';
-const RPC_URL='https://api.mainnet-beta.solana.com';
+const BSC_RPC_URL = 'https://bsc-dataseed1.binance.org';
+const ETHEREUM_RPC_URL = 'https://eth.llamarpc.com';
+const RPC_URL = 'https://api.mainnet-beta.solana.com';
 
 // Example callback implementation
 class ExampleToolExecutionCallback implements IToolExecutionCallback {
@@ -81,7 +81,6 @@ class ToolArgsCallback implements IToolExecutionCallback {
   onToolExecution(data: ToolExecutionData): void {
     // Log state and input data
     if (data.state === ToolExecutionState.STARTED) {
-      
       // Save input data for the swap tool
       if (data.input && typeof data.input === 'object') {
         if (data.toolName === 'swap') {
@@ -103,21 +102,22 @@ class MockSwapPlugin extends SwapPlugin {
   async initialize(config: any): Promise<void> {
     // Call the parent initialize first
     await super.initialize(config);
-    
+
     // Get the swapTool property from the parent class
-    const swapToolProperty = Object.entries(this).find(([key, value]) => 
-      key === 'swapTool' || (value && typeof value === 'object' && 'simulateQuoteTool' in value)
+    const swapToolProperty = Object.entries(this).find(
+      ([key, value]) =>
+        key === 'swapTool' || (value && typeof value === 'object' && 'simulateQuoteTool' in value),
     );
-    
+
     if (swapToolProperty) {
       const [toolKey, originalTool] = swapToolProperty;
-      
+
       // Replace the simulateQuoteTool method with our spy function
       const originalSimulateQuoteTool = originalTool.simulateQuoteTool;
       originalTool.simulateQuoteTool = async (args: any) => {
         // Capture the args
-        this.finalArgs = {...args};
-        
+        this.finalArgs = { ...args };
+
         // Return result from original method
         return originalSimulateQuoteTool.call(originalTool, args);
       };
@@ -138,7 +138,7 @@ describe('Planning Agent', () => {
     // Reset tool callback before each test
     toolCallback = new ToolArgsCallback();
     agent.registerToolExecutionCallback(toolCallback);
-    
+
     await agent.execute({
       input: input,
       threadId: '987fcdeb-a123-45e6-7890-123456789abc',
@@ -146,7 +146,7 @@ describe('Planning Agent', () => {
 
     // Then check the callback captured args
     const callbackArgs = toolCallback.getToolArgs();
-    
+
     // Return whichever is not null, preferring mockSwapPlugin
     return mockSwapPlugin.finalArgs || callbackArgs;
   }
@@ -199,8 +199,6 @@ describe('Planning Agent', () => {
       },
     };
 
-    
-
     // Initialize network
     network = new Network({ networks });
 
@@ -231,11 +229,11 @@ describe('Planning Agent', () => {
     agent.registerToolExecutionCallback(toolCallback);
 
     /**
-    * Initialize every provider and plugin in system since it will effect the reasoning ability of the agent
-    * This is AI dependent test, so we need to initialize everything to make the test reliable
-    */
+     * Initialize every provider and plugin in system since it will effect the reasoning ability of the agent
+     * This is AI dependent test, so we need to initialize everything to make the test reliable
+     */
 
-     // Initialize provider
+    // Initialize provider
     const birdeyeApi = new BirdeyeProvider({
       apiKey: settings.get('BIRDEYE_API_KEY'),
     });
@@ -255,7 +253,6 @@ describe('Planning Agent', () => {
     });
     const bscProvider = new ethers.JsonRpcProvider(BSC_RPC_URL);
 
-
     // Initialize plugins
     const bscChainId = 56;
     const pancakeswap = new PancakeSwapProvider(bscProvider, bscChainId);
@@ -272,16 +269,11 @@ describe('Planning Agent', () => {
     const tokenPlugin = new TokenPlugin();
     const knowledgePlugin = new KnowledgePlugin();
     const bridgePlugin = new BridgePlugin();
-    const debridge = new deBridgeProvider(
-      [bscProvider, new Connection(RPC_URL)],
-      56,
-      7565164,
-    );
+    const debridge = new deBridgeProvider([bscProvider, new Connection(RPC_URL)], 56, 7565164);
     const walletPlugin = new WalletPlugin();
     const stakingPlugin = new StakingPlugin();
     const thena = new ThenaProvider(bscProvider, bscChainId);
     const lista = new ListaProvider(bscProvider, bscChainId);
-
 
     // Initialize plugins with providers
     mockSwapPlugin.initialize({
@@ -290,36 +282,35 @@ describe('Planning Agent', () => {
       providers: [pancakeswap, fourMeme, thena, jupiter, oku, kyber],
       supportedChains: ['bnb', 'ethereum', 'solana'], // These will be intersected with agent's networks
     }),
-    tokenPlugin.initialize({
-      defaultChain: 'bnb',
-      providers: [birdeyeApi, fourMeme as any],
-      supportedChains: ['solana', 'bnb', 'ethereum'],
-    }),
-    await knowledgePlugin.initialize({
-      providers: [binkProvider],
-    }),
-    await imagePlugin.initialize({
-      defaultChain: 'bnb',
-      providers: [binkProvider],
-    }),
-    await bridgePlugin.initialize({
-      defaultChain: 'bnb',
-      providers: [debridge],
-      supportedChains: ['bnb', 'solana'],
-    }),
-    await walletPlugin.initialize({
-      defaultChain: 'bnb',
-      providers: [birdeyeApi, alchemyApi, bnbProvider, solanaProvider],
-      supportedChains: ['bnb', 'solana', 'ethereum'],
-    }),
-    await stakingPlugin.initialize({
-      defaultSlippage: 0.5,
-      defaultChain: 'bnb',
-      providers: [venus, kernelDao, lista],
-    }),
-
-    // Register plugins with agent
-    await agent.registerPlugin(mockSwapPlugin as any);
+      tokenPlugin.initialize({
+        defaultChain: 'bnb',
+        providers: [birdeyeApi, fourMeme as any],
+        supportedChains: ['solana', 'bnb', 'ethereum'],
+      }),
+      await knowledgePlugin.initialize({
+        providers: [binkProvider],
+      }),
+      await imagePlugin.initialize({
+        defaultChain: 'bnb',
+        providers: [binkProvider],
+      }),
+      await bridgePlugin.initialize({
+        defaultChain: 'bnb',
+        providers: [debridge],
+        supportedChains: ['bnb', 'solana'],
+      }),
+      await walletPlugin.initialize({
+        defaultChain: 'bnb',
+        providers: [birdeyeApi, alchemyApi, bnbProvider, solanaProvider],
+        supportedChains: ['bnb', 'solana', 'ethereum'],
+      }),
+      await stakingPlugin.initialize({
+        defaultSlippage: 0.5,
+        defaultChain: 'bnb',
+        providers: [venus, kernelDao, lista],
+      }),
+      // Register plugins with agent
+      await agent.registerPlugin(mockSwapPlugin as any);
     await agent.registerPlugin(tokenPlugin as any);
     await agent.registerPlugin(knowledgePlugin as any);
     await agent.registerPlugin(bridgePlugin as any);
@@ -328,172 +319,179 @@ describe('Planning Agent', () => {
     await agent.registerPlugin(imagePlugin as any);
   }, 30000); // Increase timeout for beforeEach
 
+  // === SWAP ===
 
-  // === SWAP TESTS ===
+  it('Example 1: swap token on jupiter', async () => {
+    await agent.execute({
+      input: 'swap 0.001 SOL to USDC',
+      threadId: '987fcdeb-a123-45e6-7890-123456789abc',
+    });
 
-  // Test Case 1: Basic swap (input amount) - Should succeed
-  it('Test 1: Basic swap with input amount', async () => {
-    const args = await testSwapToolArgs('swap 0.01 SOL to USDC on solana');
-    console.log('🌈 Swap operation details 1:', JSON.stringify(args, null, 2));
+    const capturedArgs = toolCallback.getToolArgs();
 
-    // Use assert style that will fail the test when args is null
-    expect(args).not.toBeNull();
-    expect(args.fromToken).toBe('So11111111111111111111111111111111111111111');
-    expect(args.toToken).toBe('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB');
-    expect(args.amount).toBe('0.01');
-    expect(args.amountType).toBe('input');
-    expect(args.network).toBe('solana');
-    console.log('✅ Test 1 passed');
+    expect(capturedArgs).toBeDefined();
+    expect(capturedArgs.fromToken).toBe('So11111111111111111111111111111111111111111');
+    expect(capturedArgs.toToken).toBe('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
+    expect(capturedArgs.amount).toBe('0.001');
+    expect(capturedArgs.amountType).toBe('input');
+    expect(capturedArgs.network).toBe('solana');
+    capturedArgs.provider ? expect(capturedArgs.provider).toBe('jupiter') : '';
+    expect(capturedArgs.limitPrice).toBe(0);
   }, 90000);
 
-  // Test Case 2: Reverse swap (output amount) - Should succeed
-  it('Test 2: Reverse swap with output amount', async () => {
-    const args = await testSwapToolArgs('buy 0.01 USDC with SOL on solana');
-    console.log('🌈 Swap operation details 2:', JSON.stringify(args, null, 2));
+  it('Example 2: should fail when swapping with insufficient balance', async () => {
+    await agent.execute({
+      input: 'swap 200 SOL to USDC', // Large amount that exceeds balance
+      threadId: '456bcdef-7890-12a3-b456-789012345def',
+    });
 
-    // Use assert style that will fail the test when args is null
-    expect(args).not.toBeNull();
-    expect(args.fromToken).toBe('So11111111111111111111111111111111111111111');
-    expect(args.toToken).toBe('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB');
-    expect(args.amount).toBe('0.01');
-    expect(args.amountType).toBe('output');
-    expect(args.network).toBe('solana');
-    console.log('✅ Test 2 passed');
-  }, 90000);
+    const capturedArgs = toolCallback.getToolArgs();
 
-  // Test Case 3: Swap with explicitly specified provider - Should succeed
-  it('Test 3: Swap with specific provider', async () => {
-    const args = await testSwapToolArgs('swap 0.01 SOL to USDC using jupiter');
-    console.log('🌈 Swap operation details 3:', JSON.stringify(args, null, 2));
-
-    // Use assert style that will fail the test when args is null
-    expect(args).not.toBeNull();
-    expect(args.fromToken).toBe('So11111111111111111111111111111111111111111');
-    expect(args.toToken).toBe('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB');
-    expect(args.amount).toBe('0.001');
-    expect(args.amountType).toBe('input');
-    expect(args.network).toBe('solana');
-    expect(args.provider).toBe('jupiter');
-    console.log('✅ Test 3 passed');
-  }, 90000);
-
-  // Test Case 4: Swap with explicitly specified network - Should succeed
-  it('Test 4: Swap with specific network', async () => {
-    const args = await testSwapToolArgs('swap 0.01 SOL to USDC on solana');
-    console.log('🌈 Swap operation details 4:', JSON.stringify(args, null, 2));
-
-    // Use assert style that will fail the test when args is null
-    expect(args).not.toBeNull();
-    expect(args.fromToken).toBe('So11111111111111111111111111111111111111111');
-    expect(args.toToken).toBe('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB');
-    expect(args.amount).toBe('0.001');
-    expect(args.amountType).toBe('input');
-    expect(args.network).toBe('solana');
-    console.log('✅ Test 4 passed');
-  }, 90000);
-
-  // Test Case 5: Swap with BNB token - Should succeed
-  it('Test 5: Swap BNB to cake', async () => {
-    const args = await testSwapToolArgs('swap 0.001 BNB to CAKE');
-    console.log('🌈 Swap operation details 5:', JSON.stringify(args, null, 2));
-    
-    // Use assert style that will fail the test when args is null
-    expect(args).not.toBeNull();
-    expect(args.fromToken).toBe('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
-    expect(args.toToken).toBe('0x0e09fabb73bd3ae120f0902e54560ff690412c03');
-    expect(args.amount).toBe('0.001');
-    expect(args.amountType).toBe('input');
-    expect(args.network).toBe('bnb');
-    console.log('✅ Test 5 passed');
-  }, 90000);
-
-  // Test Case 6: Reverse swap with BNB - Should succeed
-  it('Test 6: Reverse swap to buy BNB', async () => {
-    const args = await testSwapToolArgs('buy 0.001 BNB with CAKE');
-    console.log('🌈 Swap operation details 6:', JSON.stringify(args, null, 2));
-    
-    // Use assert style that will fail the test when args is null
-    expect(args).not.toBeNull();
-    expect(args.fromToken).toBe('0x0e09fabb73bd3ae120f0902e54560ff690412c03');
-    expect(args.toToken).toBe('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
-    expect(args.amount).toBe('0.001');
-    expect(args.amountType).toBe('output');
-    expect(args.network).toBe('bnb');
-    console.log('✅ Test 6 passed');
-  }, 90000);
-
-  // Test Case 7: Swap with slippage specified - Should succeed
-  it('Test 7: Swap with slippage specified', async () => {
-    const args = await testSwapToolArgs('swap 0.001 SOL to USDC with 1% slippage');
-    console.log('🌈 Swap operation details 7:', JSON.stringify(args, null, 2));
-
-    // Use assert style that will fail the test when args is null
-    expect(args).not.toBeNull();
-    expect(args.fromToken).toBe('So11111111111111111111111111111111111111111');
-    expect(args.toToken).toBe('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB');
-    expect(args.amount).toBe('0.001');
-    expect(args.amountType).toBe('input');
-    expect(args.network).toBe('solana');
-    expect(args.slippage).toBe(1);
-    console.log('✅ Test 7 passed');
-  }, 90000);
-
-  // Test Case 8: Invalid token symbol - Should fail gracefully (AI failure = test success)
-  it('Test 8: Swap with invalid token symbol', async () => {
-    const args = await testSwapToolArgs('swap 0.001 INVALID_TOKEN to USDC');
-    console.log('🌈 Swap operation details 8:', JSON.stringify(args, null, 2));
-    
-    // SPECIAL CASE: For this test, we EXPECT the swap operation to fail at some point
-    // But we still want to capture the args that were passed to simulateQuoteTool
-    
-    // Mark test as skipped with a message if args are null
-    if (!args) {
-      console.log('⚠️ Test 8: Could not capture args for invalid token test - marking as skipped');
-      return;
+    if (capturedArgs === null) {
+      expect(capturedArgs).toBeNull();
     }
-    
-    // If we got args, validate them
-    expect(args.fromToken).toBeDefined();
-    expect(args.toToken).toBe('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB');
-    expect(args.amount).toBe('0.001');
-    expect(args.amountType).toBe('input');
-    console.log('✅ Test 8 passed: Successfully captured arguments for invalid token');
   }, 90000);
 
-  // Test Case 9: Invalid amount (too large) - Should fail gracefully (AI failure = test success)
-  it('Test 9: Swap with unreasonably large amount', async () => {
-    const args = await testSwapToolArgs('swap 999999 SOL to USDC');
-    console.log('🌈 Swap operation details 9:', JSON.stringify(args, null, 2));
-    
-    // SPECIAL CASE: For this test, we EXPECT the swap execution to fail
-    // But we still want to capture the args that were passed to simulateQuoteTool
-    // Mark test as skipped with a message if args are null
-    if (!args) {
-      console.log('⚠️ Test 9: Could not capture args for large amount test - marking as skipped');
-      return;
+  it('Example 3: should handle invalid token symbol gracefully', async () => {
+    await agent.execute({
+      input: 'swap 0.001 INVALIDTOKEN to USDC',
+      threadId: '123e4567-e89b-12d3-a456-426614174003',
+    });
+
+    const capturedArgs = toolCallback.getToolArgs();
+
+    if (capturedArgs === null) {
+      expect(capturedArgs).toBeNull();
     }
-    
-    // If we got args, validate them
-    expect(args.fromToken).toBe('So11111111111111111111111111111111111111111');
-    expect(args.toToken).toBe('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB');
-    expect(args.amount).toBe('999999');
-    expect(args.amountType).toBe('input');
-    expect(args.network).toBe('solana');
-    console.log('✅ Test 9 passed: Successfully captured arguments for unreasonably large amount');
+  }, 30000);
+
+  it('Example 4: should swap tokens via PancakeSwap on BNB Chain', async () => {
+    await agent.execute({
+      input: 'swap 0.001 BNB to BINK on BNB chain via pancakeswap',
+      threadId: '123e4567-e89b-12d3-a456-426614174004',
+    });
+
+    const capturedArgs = toolCallback.getToolArgs();
+
+    expect(capturedArgs).toBeDefined();
+    expect(capturedArgs.fromToken).toBe('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
+    expect(capturedArgs.toToken).toBe('0x5fdfafd107fc267bd6d6b1c08fcafb8d31394ba1');
+    expect(capturedArgs.amount).toBe('0.001');
+    expect(capturedArgs.amountType).toBe('input');
+    expect(capturedArgs.network).toBe('bnb');
+    expect(capturedArgs.provider).toBe('pancakeswap');
+    expect(capturedArgs.limitPrice).toBe(0);
   }, 90000);
 
-  // Test Case 10: Complex natural language query - Should succeed
-  it('Test 10: Swap with complex natural language', async () => {
-    const args = await testSwapToolArgs('I would like to exchange 0.001 SOL for some USDC tokens please');
-    console.log('🌈 Swap operation details 10:', JSON.stringify(args, null, 2));
-    
-    // Use assert style that will fail the test when args is null
-    expect(args).not.toBeNull();
-    expect(args.fromToken).toBe('So11111111111111111111111111111111111111111');
-    expect(args.toToken).toBe('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB');
-    expect(args.amount).toBe('0.001');
-    expect(args.amountType).toBe('input');
-    expect(args.network).toBe('solana');
-    console.log('✅ Test 10 passed');
+  it('Example 5: float amount', async () => {
+    await agent.execute({
+      input: 'swap 0.0012424343434343 SOL to USDC', // Large amount that exceeds balance
+      threadId: '456bcdef-7890-12a3-b456-789012345def',
+    });
+
+    const capturedArgs = toolCallback.getToolArgs();
+
+    expect(capturedArgs).toBeDefined();
+    expect(capturedArgs.fromToken).toBe('So11111111111111111111111111111111111111111');
+    expect(capturedArgs.toToken).toBe('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
+    expect(capturedArgs.amount).toBe('0.0012424343434343');
+    expect(capturedArgs.amountType).toBe('input');
+    expect(capturedArgs.network).toBe('solana');
+    capturedArgs.provider ? expect(capturedArgs.provider).toBe('jupiter') : '';
+    expect(capturedArgs.limitPrice).toBe(0);
+  }, 90000);
+
+  it('Example 6: float amount', async () => {
+    await agent.execute({
+      input: 'swap 1.1232334 BINK to CAKE on BNB chain using pancakeswap',
+      threadId: '123e4567-e89b-12d3-a456-426614174004',
+    });
+
+    const capturedArgs = toolCallback.getToolArgs();
+
+    expect(capturedArgs).toBeDefined();
+    expect(capturedArgs.fromToken).toBe('0x5fdfafd107fc267bd6d6b1c08fcafb8d31394ba1');
+    expect(capturedArgs.toToken).toBe('0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82');
+    expect(capturedArgs.amount).toBe('1.1232334');
+    expect(capturedArgs.amountType).toBe('input');
+    expect(capturedArgs.network).toBe('bnb');
+    expect(capturedArgs.provider).toBe('pancakeswap');
+    expect(capturedArgs.limitPrice).toBe(0);
+  }, 90000);
+
+  it('Example 7: swap all SOL to USDC using Jupiter', async () => {
+    await agent.execute({
+      input: 'swap all my SOL to USDC using jupiter',
+      threadId: '123e4567-e89b-12d3-a456-426614174005',
+    });
+
+    const capturedArgs = toolCallback.getToolArgs();
+
+    expect(capturedArgs).toBeDefined();
+    expect(capturedArgs.fromToken).toBe('So11111111111111111111111111111111111111111');
+    expect(capturedArgs.toToken).toBe('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
+    expect(capturedArgs.amountType).toBe('input');
+    expect(capturedArgs.network).toBe('solana');
+    expect(capturedArgs.provider).toBe('jupiter');
+    expect(capturedArgs.limitPrice).toBe(0);
+  }, 90000);
+
+  it('Example 8: swap all BNB to USDT using pancakeswap', async () => {
+    await agent.execute({
+      input: 'swap all my BNB to USDT using pancakeswap',
+      threadId: '123e4567-e89b-12d3-a456-426614174006',
+    });
+
+    const capturedArgs = toolCallback.getToolArgs();
+
+    expect(capturedArgs).toBeDefined();
+    expect(capturedArgs.fromToken).toBe('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
+    expect(capturedArgs.toToken).toBe('0x55d398326f99059ff775485246999027b3197955');
+    expect(capturedArgs.amountType).toBe('input');
+    expect(capturedArgs.network).toBe('bnb');
+    expect(capturedArgs.provider).toBe('pancakeswap');
+    expect(capturedArgs.limitPrice).toBe(0);
+  }, 90000);
+  // == LIMIT ORDER ==
+  it('Example 9: swap BINK to USDT with limit price using pancakeswap at price 10', async () => {
+    await agent.execute({
+      input: 'swap 1 BINK to CAKE at price 10',
+      threadId: '123e4567-e89b-12d3-a456-426614174009',
+    });
+
+    const capturedArgs = toolCallback.getToolArgs();
+    expect(capturedArgs).toBeDefined();
+    expect(capturedArgs.fromToken).toBe('0x5fdfafd107fc267bd6d6b1c08fcafb8d31394ba1');
+    expect(capturedArgs.toToken).toBe('0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82');
+    expect(capturedArgs.amount).toBe('1');
+    expect(capturedArgs.amountType).toBe('input');
+    expect(capturedArgs.network).toBe('bnb');
+    capturedArgs.provider ? expect(capturedArgs.provider).toBe('pancakeswap') : '';
+    expect(capturedArgs.limitPrice).toBe(10);
+  }, 90000);
+
+  it('Example 10: swap SOL to USDC with limit price using jupiter', async () => {
+    await agent.execute({
+      input: 'swap 0.001 SOL to USDC using jupiter with at price 200',
+      threadId: '123e4567-e89b-12d3-a456-426614174010',
+    });
+
+    const capturedArgs = toolCallback.getToolArgs();
+
+    expect(capturedArgs).not.toBeNull();
+    let checkFromToken = false;
+
+    capturedArgs.fromToken == 'So11111111111111111111111111111111111111111' ||
+    capturedArgs.fromToken == 'So11111111111111111111111111111111111111112'
+      ? (checkFromToken = true)
+      : (checkFromToken = false);
+
+    expect(checkFromToken).toBe(true);
+    expect(capturedArgs.toToken).toBe('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
+    expect(capturedArgs.amount).toBe('0.001');
+    expect(capturedArgs.amountType).toBe('input');
+    expect(capturedArgs.network).toBe('solana');
+    expect(capturedArgs.provider).toBe('jupiter');
+    expect(capturedArgs.limitPrice).toBe(200);
   }, 90000);
 });

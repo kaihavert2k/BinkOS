@@ -68,7 +68,8 @@ describe('StakingPlugin', () => {
       network,
     );
 
-    console.log('👛 Wallet ', await wallet.getAddress(NetworkName.BNB));
+    console.log('👛 Wallet BNB', await wallet.getAddress(NetworkName.BNB));
+    console.log('👛 Wallet Solana', await wallet.getAddress(NetworkName.SOLANA));
 
     // Mock agent invokeTool to avoid real execution and return test responses
     agent = new Agent(
@@ -120,7 +121,6 @@ describe('StakingPlugin', () => {
 
     const result = await agent.invokeTool('staking', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ it ~ result 1:', parsedResult);
 
     expect(parsedResult).toBeDefined();
     expect(parsedResult.status).toBe('success');
@@ -152,7 +152,6 @@ describe('StakingPlugin', () => {
 
     const result = await agent.invokeTool('staking', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ it ~ result 2:', parsedResult);
 
     expect(parsedResult).toBeDefined();
     expect(parsedResult.status).toBe('success');
@@ -183,7 +182,6 @@ describe('StakingPlugin', () => {
 
     const result = await agent.invokeTool('staking', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ it ~ result 3:', parsedResult);
 
     expect(parsedResult).toBeDefined();
     expect(parsedResult.status).toBe('success');
@@ -215,7 +213,6 @@ describe('StakingPlugin', () => {
 
     const result = await agent.invokeTool('staking', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ it ~ result 4:', parsedResult);
 
     expect(parsedResult).toBeDefined();
     let checkProvider = false;
@@ -246,7 +243,6 @@ describe('StakingPlugin', () => {
 
     const result = await agent.invokeTool('staking', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ it ~ result 5:', parsedResult);
     expect(result).toBeDefined();
     expect(parsedResult.status).toBe('error');
   }, 90000);
@@ -262,7 +258,6 @@ describe('StakingPlugin', () => {
 
     const result = await agent.invokeTool('staking', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ it ~ result 6:', parsedResult);
 
     expect(result).toBeDefined();
     expect(parsedResult.status).toBe('error');
@@ -276,7 +271,6 @@ describe('StakingPlugin', () => {
 
     const result = await agent.invokeTool('get_staking_balance', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ it ~ result 7:', parsedResult);
 
     expect(parsedResult).toBeDefined();
     expect(parsedResult.status).toBe('success');

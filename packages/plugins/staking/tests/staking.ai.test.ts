@@ -232,11 +232,9 @@ describe('Planning Agent', () => {
       threadId: '123e4567-e89b-12d3-a456-426614174007',
     });
     const capturedArgs = toolCallback.getToolArgs();
-    console.log('🔍 1 Captured Stake Args:', capturedArgs);
     expect(capturedArgs).toBeDefined();
     expect(capturedArgs.tokenA).toBe('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
     expect(capturedArgs.amountA).toBe('0.0012');
-    // expect(['supply']).toContain(capturedArgs.type);
     expect(capturedArgs.network).toBe('bnb');
     expect(capturedArgs.provider).toBe('venus');
   }, 90000);
@@ -247,7 +245,6 @@ describe('Planning Agent', () => {
       threadId: '123e4567-e89b-12d3-a456-426614174008',
     });
     const capturedArgs = toolCallback.getToolArgs();
-    console.log('🔍 2 Captured Stake BNB Args:', capturedArgs);
     expect(capturedArgs).toBeDefined();
     expect(capturedArgs.tokenA).toBe('0xA07c5b74C9B40447a954e1466938b865b6BBea36');
     expect(capturedArgs.amountA).toBe('0.0013');
@@ -262,7 +259,6 @@ describe('Planning Agent', () => {
       threadId: '123e4567-e89b-12d3-a456-426614174009',
     });
     const capturedArgs = toolCallback.getToolArgs();
-    console.log('🔍 3 Captured Unstake BNB Args:', capturedArgs);
     expect(capturedArgs).toBeDefined();
     expect(capturedArgs.tokenA).toBe('0xA07c5b74C9B40447a954e1466938b865b6BBea36');
     expect(['supply', 'withdraw']).toContain(capturedArgs.type);

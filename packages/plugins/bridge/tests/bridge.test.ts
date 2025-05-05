@@ -68,7 +68,8 @@ describe('BridgePlugin', () => {
       network,
     );
 
-    console.log('👛 Wallet ', await wallet.getAddress(NetworkName.BNB));
+    console.log('👛 Wallet BNB', await wallet.getAddress(NetworkName.BNB));
+    console.log('👛 Wallet Solana', await wallet.getAddress(NetworkName.SOLANA));
 
     // Mock agent invokeTool to avoid real execution and return test responses
     agent = new Agent(
@@ -134,7 +135,6 @@ describe('BridgePlugin', () => {
 
     const result = await agent.invokeTool('bridge', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ it ~ result:', parsedResult);
 
     expect(parsedResult).toBeDefined();
     expect(parsedResult.provider).toBe('deBridge');
@@ -163,7 +163,6 @@ describe('BridgePlugin', () => {
 
     const result = await agent.invokeTool('bridge', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ it ~ result:', parsedResult);
 
     expect(parsedResult).toBeDefined();
     expect(parsedResult.status).toBe('error');
@@ -184,7 +183,6 @@ describe('BridgePlugin', () => {
 
     const result = await agent.invokeTool('bridge', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ it ~ result:', parsedResult);
 
     expect(parsedResult).toBeDefined();
     expect(parsedResult.status).toBe('error');
@@ -204,7 +202,6 @@ describe('BridgePlugin', () => {
 
     const result = await agent.invokeTool('bridge', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ it ~ result:', parsedResult);
 
     expect(parsedResult).toBeDefined();
     expect(parsedResult.provider).toBe('deBridge');

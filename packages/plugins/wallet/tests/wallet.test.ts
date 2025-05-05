@@ -19,7 +19,6 @@ describe('WalletPlugin', () => {
   let networks: NetworksConfig['networks'];
 
   const BNB_RPC = 'https://binance.llamarpc.com';
-  const ETH_RPC = 'https://eth.llamarpc.com';
   const SOL_RPC = 'https://api.mainnet-beta.solana.com';
   const BNB_NATIVE_TOKEN_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
   const USDT_TOKEN_ADDRESS = '0x55d398326f99059fF775485246999027B3197955'; // USDT on BSC
@@ -70,7 +69,8 @@ describe('WalletPlugin', () => {
     );
 
     const userAddress = await wallet.getAddress(NetworkName.BNB);
-    console.log('👛 Wallet ', userAddress);
+    console.log('👛 Wallet BNB', userAddress);
+    console.log('👛 Wallet Solana', await wallet.getAddress(NetworkName.SOLANA));
 
     // Mock agent invokeTool to avoid real execution and return test responses
     agent = new Agent(
@@ -124,7 +124,6 @@ describe('WalletPlugin', () => {
 
     const result = await agent.invokeTool('transfer_tokens', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ Test 1 ~ parsedResult:', parsedResult);
 
     expect(parsedResult).toBeDefined();
     expect(parsedResult.status).toBe('success');
@@ -146,7 +145,6 @@ describe('WalletPlugin', () => {
 
     const result = await agent.invokeTool('transfer_tokens', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ Test 2 ~ parsedResult:', parsedResult);
 
     expect(parsedResult).toBeDefined();
     expect(parsedResult.status).toBe('success');
@@ -169,7 +167,6 @@ describe('WalletPlugin', () => {
 
     const result = await agent.invokeTool('transfer_tokens', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ Test 3 ~ parsedResult:', parsedResult);
 
     expect(parsedResult).toBeDefined();
     expect(parsedResult.status).toBe('error');
@@ -186,7 +183,6 @@ describe('WalletPlugin', () => {
 
     const result = await agent.invokeTool('transfer_tokens', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ Test 4 ~ parsedResult:', parsedResult);
 
     expect(parsedResult).toBeDefined();
     expect(parsedResult.status).toBe('error');
@@ -203,7 +199,6 @@ describe('WalletPlugin', () => {
 
     const result = await agent.invokeTool('transfer_tokens', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ Test 5 ~ parsedResult:', parsedResult);
 
     expect(parsedResult).toBeDefined();
     expect(parsedResult.status).toBe('error');
@@ -221,7 +216,6 @@ describe('WalletPlugin', () => {
 
     const result = await agent.invokeTool('transfer_tokens', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ Test 6 ~ parsedResult:', parsedResult);
 
     expect(parsedResult).toBeDefined();
     expect(parsedResult.status).toBe('success');
@@ -243,7 +237,6 @@ describe('WalletPlugin', () => {
 
     const result = await agent.invokeTool('transfer_tokens', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ Test 7 ~ parsedResult:', parsedResult);
 
     expect(parsedResult).toBeDefined();
     expect(parsedResult.status).toBe('success');
@@ -266,7 +259,6 @@ describe('WalletPlugin', () => {
 
     const result = await agent.invokeTool('transfer_tokens', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ Test 8 ~ parsedResult:', parsedResult);
 
     expect(parsedResult).toBeDefined();
     expect(parsedResult.status).toBe('error');
@@ -283,7 +275,6 @@ describe('WalletPlugin', () => {
 
     const result = await agent.invokeTool('transfer_tokens', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ Test 9 ~ parsedResult:', parsedResult);
 
     expect(parsedResult).toBeDefined();
     expect(parsedResult.status).toBe('error');
@@ -300,7 +291,6 @@ describe('WalletPlugin', () => {
 
     const result = await agent.invokeTool('transfer_tokens', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ Test 10 ~ parsedResult:', parsedResult);
 
     expect(parsedResult).toBeDefined();
     expect(parsedResult.status).toBe('success');
@@ -322,7 +312,6 @@ describe('WalletPlugin', () => {
 
     const result = await agent.invokeTool('transfer_tokens', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ Test 11 ~ parsedResult:', parsedResult);
 
     expect(parsedResult).toBeDefined();
     expect(parsedResult.status).toBe('success');
@@ -333,4 +322,3 @@ describe('WalletPlugin', () => {
     expect(parsedResult.amount).toBe(params.amount);
   });
 });
-// need validate wallet balance

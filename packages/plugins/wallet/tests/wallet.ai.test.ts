@@ -179,7 +179,6 @@ describe('Planning Agent - Wallet Transfer', () => {
     }
 
     const capturedArgs = toolCallback.getToolArgs();
-    console.log('🔍 1 Captured Transfer Args:', capturedArgs);
     expect(capturedArgs).toBeDefined();
     expect(capturedArgs.token).toBe('So11111111111111111111111111111111111111111');
     expect(capturedArgs.toAddress).toBe('DNwVbaJ3oQaSGkiHS2i6ZRCH193RGPK4cqWPKvLh2RTQ');
@@ -198,7 +197,6 @@ describe('Planning Agent - Wallet Transfer', () => {
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     const capturedArgs = toolCallback.getToolArgs();
-    console.log('🔍 2 Captured Transfer Args:', capturedArgs);
     if (capturedArgs === null) {
       expect(true).toBe(true);
     }
@@ -216,7 +214,6 @@ describe('Planning Agent - Wallet Transfer', () => {
     }
 
     const capturedArgs = toolCallback.getToolArgs();
-    console.log('🔍 3 Captured Transfer Args:', capturedArgs);
     expect(capturedArgs).toBeDefined();
     expect(capturedArgs.token).toBe('0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
     expect(capturedArgs.toAddress).toBe('0x42C1a8188a853880089073F7c15B31657d5F4D5f');
@@ -239,7 +236,6 @@ describe('Planning Agent - Wallet Transfer', () => {
     }
 
     const capturedArgs = toolCallback.getToolArgs();
-    console.log('🔍 4 Captured Transfer Args:', capturedArgs);
     expect(capturedArgs).toBeDefined();
     expect(capturedArgs.token).toBe('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB');
     expect(capturedArgs.toAddress).toBe('DNwVbaJ3oQaSGkiHS2i6ZRCH193RGPK4cqWPKvLh2RTQ');

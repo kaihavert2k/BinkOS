@@ -13,14 +13,12 @@ import { ThenaProvider } from '../../../providers/thena/src/ThenaProvider';
 describe('SwapPlugin', () => {
   let swapPlugin: SwapPlugin;
   let wallet: Wallet;
-  let network: Network;
   let jupiterProvider: JupiterProvider;
   let bnbProvider: ethers.JsonRpcProvider;
   let agent: Agent;
   let networks: NetworksConfig['networks'];
 
   const BNB_RPC = 'https://binance.llamarpc.com';
-  const ETH_RPC = 'https://eth.llamarpc.com';
   const SOL_RPC = 'https://api.mainnet-beta.solana.com';
   const SOL_NATIVE_TOKEN_ADDRESS = 'So11111111111111111111111111111111111111111';
   const WSOL_NATIVE_TOKEN_ADDRESS = 'So11111111111111111111111111111111111111112';
@@ -67,7 +65,8 @@ describe('SwapPlugin', () => {
       network,
     );
 
-    console.log('👛 Wallet ', await wallet.getAddress(NetworkName.SOLANA));
+    console.log('👛 Wallet Solana', await wallet.getAddress(NetworkName.SOLANA));
+    console.log('👛 Wallet BNB', await wallet.getAddress(NetworkName.BNB));
 
     jupiterProvider = new JupiterProvider(new Connection(SOL_RPC));
     bnbProvider = new ethers.JsonRpcProvider(BNB_RPC);
@@ -109,7 +108,6 @@ describe('SwapPlugin', () => {
 
     const result = await agent.invokeTool('swap', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    //console.log('🚀 ~ Test 1 ~ parsedResult:', parsedResult);
     expect(parsedResult).toBeDefined();
     expect(parsedResult).toMatchObject({
       status: 'success',
@@ -134,9 +132,7 @@ describe('SwapPlugin', () => {
     };
 
     const result = await agent.invokeTool('swap', params);
-    // Parse the JSON string response
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ Test 2 ~ parsedResult:', parsedResult);
     expect(parsedResult).toBeDefined();
     expect(parsedResult).toMatchObject({
       status: 'error',
@@ -155,12 +151,8 @@ describe('SwapPlugin', () => {
       limitPrice: 0,
     };
 
-    // const rejectdata = await expect(agent.invokeTool('swap', params)).rejects;
-    // console.log('🤖 rejectdata', rejectdata);
     const result = await agent.invokeTool('swap', params);
-    // Parse the JSON string response
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    //console.log('🚀 ~ Test 3 ~ parsedResult:', parsedResult);
     expect(parsedResult).toBeDefined();
     expect(parsedResult).toMatchObject({
       status: 'error',
@@ -181,7 +173,6 @@ describe('SwapPlugin', () => {
 
     const result = await agent.invokeTool('swap', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    //console.log('🚀 ~ Test 4 ~ parsedResult:', parsedResult);
     expect(parsedResult).toBeDefined();
     expect(parsedResult.status).toBe('success');
     expect(parsedResult.fromToken.address).toBe(WSOL_NATIVE_TOKEN_ADDRESS);
@@ -205,7 +196,6 @@ describe('SwapPlugin', () => {
 
     const result = await agent.invokeTool('swap', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ Test 6 ~ parsedResult:', parsedResult);
     expect(parsedResult).toBeDefined();
     expect(parsedResult.status).toBe('success');
     expect(parsedResult.fromToken.address).toBe(WSOL_NATIVE_TOKEN_ADDRESS);
@@ -230,7 +220,6 @@ describe('SwapPlugin', () => {
 
     const result = await agent.invokeTool('swap', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ Test 7 ~ parsedResult:', parsedResult);
     expect(parsedResult).toBeDefined();
     expect(parsedResult.status).toBe('success');
     expect(parsedResult.fromToken.address).toBe('0x5fdfafd107fc267bd6d6b1c08fcafb8d31394ba1');
@@ -252,7 +241,6 @@ describe('SwapPlugin', () => {
 
     const result = await agent.invokeTool('swap', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ Test 8 ~ parsedResult:', parsedResult);
     expect(parsedResult).toBeDefined();
     expect(parsedResult.status).toBe('success');
     expect(parsedResult.fromToken.address).toBe('0x5fdfafd107fc267bd6d6b1c08fcafb8d31394ba1');
@@ -274,7 +262,6 @@ describe('SwapPlugin', () => {
 
     const result = await agent.invokeTool('swap', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ Test 9 ~ parsedResult:', parsedResult);
     expect(parsedResult).toBeDefined();
     expect(parsedResult.status).toBe('success');
     expect(parsedResult.fromToken.address).toBe('0x5fdfafd107fc267bd6d6b1c08fcafb8d31394ba1');
@@ -297,7 +284,6 @@ describe('SwapPlugin', () => {
 
     const result = await agent.invokeTool('swap', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ Test 9 ~ parsedResult:', parsedResult);
     expect(parsedResult).toBeDefined();
     expect(parsedResult.status).toBe('error');
   });
@@ -316,7 +302,6 @@ describe('SwapPlugin', () => {
 
     const result = await agent.invokeTool('swap', params);
     const parsedResult = typeof result === 'string' ? JSON.parse(result) : result;
-    console.log('🚀 ~ Test 11 ~ parsedResult:', parsedResult);
     expect(parsedResult).toBeDefined();
     expect(parsedResult.status).toBe('success');
   }, 90000);

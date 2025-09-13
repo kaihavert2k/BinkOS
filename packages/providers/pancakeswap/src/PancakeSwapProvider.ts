@@ -9,7 +9,7 @@ import {
   Currency,
   Native,
 } from '@pancakeswap/sdk';
-import { EVM_NATIVE_TOKEN_ADDRESS, NetworkName, Token } from '@binkai/core';
+import { EVM_NATIVE_TOKEN_ADDRESS, NetworkName, Token, logger } from '@binkai/core';
 import { ethers, Contract, Interface, Provider } from 'ethers';
 import { createPublicClient, http, PublicClient } from 'viem';
 import { bsc } from 'viem/chains';
@@ -77,7 +77,7 @@ export class PancakeSwapProvider extends BaseSwapProvider {
       });
       return v3Pools;
     } catch (error) {
-      console.warn('Failed to fetch V3 pools:', error);
+      logger.warn('Failed to fetch V3 pools:', error);
       throw new Error('No liquidity pools found for the token pair');
     }
   }
@@ -118,7 +118,7 @@ export class PancakeSwapProvider extends BaseSwapProvider {
         );
 
         if (adjustedAmount !== params.amount) {
-          console.log(
+          logger.info(
             `🤖 PancakeSwap adjusted input amount from ${params.amount} to ${adjustedAmount}`,
           );
         }
@@ -143,7 +143,7 @@ export class PancakeSwapProvider extends BaseSwapProvider {
       // Get candidate pools
       const pools = await this.getCandidatePools(tokenIn, tokenOut);
 
-      console.log('🤖 Pools:', pools.length);
+      logger.info('🤖 Pools:', pools.length);
 
       // Get the best trade using V4Router
       const trade =
@@ -229,7 +229,7 @@ export class PancakeSwapProvider extends BaseSwapProvider {
 
       return quote;
     } catch (error: unknown) {
-      console.error('Error getting quote:', error);
+      logger.error('Error getting quote:', error);
       throw new Error(
         `Failed to get quote: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );

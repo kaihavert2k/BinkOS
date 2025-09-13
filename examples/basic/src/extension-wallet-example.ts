@@ -11,6 +11,7 @@ import {
   ToolExecutionData,
   ToolExecutionState,
   ExtensionWallet,
+  OpenAIModel,
 } from '@binkai/core';
 import { SwapPlugin } from '@binkai/swap-plugin';
 import { PancakeSwapProvider } from '@binkai/pancakeswap-provider';
@@ -116,13 +117,30 @@ async function mockExtensionWalletClient(network: Network) {
       } catch (e) {
         tx = SolanaTransaction.from(Buffer.from(data.transaction, 'base64'));
       }
+      const signedTx = await wallet.signTransaction({ network: data.network, transaction: tx });
+      callback({ signedTransaction: signedTx });
+    } else {
+      callback({ error: 'Not supported' });
+    }
+  });
+
+  socket.on('send_transaction', async (data, callback) => {
+    console.log('send_transaction from extension wallet client', data);
+    let tx: ethers.Transaction | VersionedTransaction | SolanaTransaction;
+
+    if (data.network == 'solana') {
+      callback({ error: 'Not supported' });
     } else {
       tx = Transaction.from(data.transaction);
+      const signedTx = await wallet.signAndSendTransaction(data.network, {
+        to: tx.to || '',
+        data: tx.data,
+        value: tx.value,
+        gasLimit: tx.gasLimit,
+      });
+      console.log('signedTx', signedTx);
+      callback({ tx_hash: signedTx.hash });
     }
-
-    const signedTx = await wallet.signTransaction({ network: data.network, transaction: tx });
-    console.log('signedTx', signedTx);
-    callback({ signedTransaction: signedTx });
   });
 }
 
@@ -211,12 +229,17 @@ async function main() {
   console.log('🤖 Wallet ETH:', await wallet.getAddress(NetworkName.SOLANA));
   // Create an agent with OpenAI
   console.log('🤖 Initializing AI agent...');
+  const llm = new OpenAIModel({
+    apiKey: settings.get('OPENAI_API_KEY') || '',
+    model: 'gpt-4o-mini',
+  });
+
   const agent = new Agent(
+    llm,
     {
-      model: 'gpt-4o',
       temperature: 0,
       systemPrompt:
-        'You are a BINK AI agent. You are able to perform swaps, bridges and get token information on multiple chains. If you do not have the token address, you can use the symbol to get the token information before performing a bridge or swap.',
+        'You are a BINK AI agent. You are able to perform bridge and get token information on multiple chains. If you do not have the token address, you can use the symbol to get the token information before performing a bridge.',
     },
     wallet,
     networks,
@@ -287,13 +310,13 @@ async function main() {
   console.log('✓ Swap plugin initialized\n');
 
   // Create providers with proper chain IDs
-  const debridge = new deBridgeProvider(provider);
+  // const debridge = new deBridgeProvider(provider);
   // Configure the plugin with supported chains
-  await bridgePlugin.initialize({
-    defaultChain: 'bnb',
-    providers: [debridge],
-    supportedChains: ['bnb', 'solana'], // These will be intersected with agent's networks
-  });
+  // await bridgePlugin.initialize({
+  //   defaultChain: 'bnb',
+  //   providers: [debridge],
+  //   supportedChains: ['bnb', 'solana'], // These will be intersected with agent's networks
+  // });
 
   console.log('✓ Bridge plugin initialized\n');
 
@@ -328,7 +351,7 @@ async function main() {
   console.log('💱 Example 2: buy BINK from 10 USDC on solana');
   const result2 = await agent.execute({
     input: `
-   SELL all USDC to BNB on bnb chain
+   BUY 2 USDC from BNB on bnb chain
     `,
   });
 

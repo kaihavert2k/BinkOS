@@ -2,7 +2,7 @@ import { SwapQuote, SwapParams } from '@binkai/swap-plugin';
 import { ethers, Contract, Provider } from 'ethers';
 import { TokenManagerHelper2ABI } from './abis/TokenManagerHelper2';
 import { BaseSwapProvider, NetworkProvider } from '@binkai/swap-plugin';
-import { EVM_NATIVE_TOKEN_ADDRESS, NetworkName, Token } from '@binkai/core';
+import { EVM_NATIVE_TOKEN_ADDRESS, NetworkName, Token, logger } from '@binkai/core';
 
 // Constants for better maintainability
 const CONSTANTS = {
@@ -151,7 +151,7 @@ export class FourMemeProvider extends BaseSwapProvider {
         );
 
         if (adjustedAmount !== params.amount) {
-          console.log(
+          logger.info(
             `🤖 FourMeme adjusted input amount from ${params.amount} to ${adjustedAmount}`,
           );
         }
@@ -232,7 +232,7 @@ export class FourMemeProvider extends BaseSwapProvider {
           ]);
           estimatedCost = '0';
         } catch (error) {
-          console.error('Error calculating sell cost:', error);
+          logger.error('Error calculating sell cost:', error);
           // Provide a fallback estimation based on current price
           if (tokenInfo.lastPrice && tokenInfo.lastPrice > 0n) {
             estimatedAmount = (
@@ -273,7 +273,7 @@ export class FourMemeProvider extends BaseSwapProvider {
 
       return quote;
     } catch (error: unknown) {
-      console.error('Error getting quote:', error);
+      logger.error('Error getting quote:', error);
       throw new Error(
         `Failed to get quote: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -299,7 +299,7 @@ export class FourMemeProvider extends BaseSwapProvider {
 
       return message;
     } catch (error: unknown) {
-      console.error('Error getting signature message:', error);
+      logger.error('Error getting signature message:', error);
       throw new Error(
         `Failed to get signature message: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -329,7 +329,7 @@ export class FourMemeProvider extends BaseSwapProvider {
 
       // Step 2: Get imgUrl from params or upload image to FourMeme
       const imgUrl = await this.uploadImageUrl(params?.img || '', accessToken);
-      console.log('🤖 Upload image:', imgUrl);
+      logger.info('🤖 Upload image:', imgUrl);
 
       // Step 3: Call create token API to get createArg
       const createResponse = await this.callCreateTokenAPI({
@@ -394,7 +394,7 @@ export class FourMemeProvider extends BaseSwapProvider {
 
       return quote;
     } catch (error: unknown) {
-      console.error('Error creating token:', error);
+      logger.error('Error creating token:', error);
       throw new Error(
         `Failed to create token: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -461,7 +461,7 @@ export class FourMemeProvider extends BaseSwapProvider {
   }
 
   private async uploadImageUrl(imgUrl: string, accessToken: string): Promise<string> {
-    console.log('🚀 ~ FourMemeProvider ~ uploadImageUrl ~ imgUrl:', imgUrl);
+    logger.info('🚀 ~ FourMemeProvider ~ uploadImageUrl ~ imgUrl:', imgUrl);
     if (imgUrl && !imgUrl.startsWith('https://static.four.meme')) {
       try {
         const url = `${CONSTANTS.FOUR_MEME_API_BASE}/private/token/upload`;
@@ -493,7 +493,7 @@ export class FourMemeProvider extends BaseSwapProvider {
         const responseData = await response.json();
         return responseData.data;
       } catch (error) {
-        console.error('Error uploadFile', error instanceof Error ? error.message : String(error));
+        logger.error('Error uploadFile', error instanceof Error ? error.message : String(error));
         return 'https://static.four.meme/market/6fbb933c-7dde-4d0a-960b-008fd727707f4551736094573656710.jpg';
       }
     } else {
@@ -518,7 +518,7 @@ export class FourMemeProvider extends BaseSwapProvider {
     preSale: string;
   }): Promise<CreateMemeResponse> {
     const launchTime = Date.now();
-    console.log('param', params);
+    logger.info('param', params);
 
     const requestBody = {
       name: params.name,
@@ -615,7 +615,7 @@ export class FourMemeProvider extends BaseSwapProvider {
         symbol: tokenInfoResponse.data.shortName,
       };
     } catch (error: unknown) {
-      console.error('Error getting token info:', error);
+      logger.error('Error getting token info:', error);
       throw new Error(
         `Failed to get token info: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -639,7 +639,7 @@ export class FourMemeProvider extends BaseSwapProvider {
 
       return null;
     } catch (error) {
-      console.error('Error parsing token creation transaction:', error);
+      logger.error('Error parsing token creation transaction:', error);
       throw new Error(`Failed to parse transaction: ${error}`);
     }
   }

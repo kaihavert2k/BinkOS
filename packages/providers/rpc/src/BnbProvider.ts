@@ -7,7 +7,7 @@ import {
   WalletInfo,
 } from '@binkai/wallet-plugin';
 import { Contract, ethers, Interface } from 'ethers';
-import { EVM_NATIVE_TOKEN_ADDRESS, NetworkName, Token } from '@binkai/core';
+import { EVM_NATIVE_TOKEN_ADDRESS, NetworkName, Token, logger } from '@binkai/core';
 
 interface BnbProviderConfig {
   rpcUrl?: string;
@@ -108,7 +108,7 @@ export class BnbProvider implements IWalletProvider {
         .getFeeData()
         .then(data => data.gasPrice || ethers.parseUnits('5', 'gwei'));
       const gasLimit = ethers.parseUnits('21000', 'wei'); // Standard transfer gas
-      const gasCost = gasPrice * gasLimit;
+      const gasCost = gasPrice * gasLimit * (30n / 10n);
 
       // If balance is less than amount + gas, adjust the amount
       if (balance < amountBigInt + gasCost) {
@@ -125,7 +125,7 @@ export class BnbProvider implements IWalletProvider {
       // If we have enough balance, no adjustment needed
       return amount;
     } catch (error) {
-      console.error('Error adjusting amount:', error);
+      logger.error('Error adjusting amount:', error);
       // In case of error, return original amount
       return amount;
     }
@@ -146,7 +146,7 @@ export class BnbProvider implements IWalletProvider {
     );
 
     if (adjustedAmount !== params.amount) {
-      console.log(`🤖 BnbProvider adjusted amount from ${params.amount} to ${adjustedAmount}`);
+      logger.info(`🤖 BnbProvider adjusted amount from ${params.amount} to ${adjustedAmount}`);
     }
 
     // Generate a unique quote ID

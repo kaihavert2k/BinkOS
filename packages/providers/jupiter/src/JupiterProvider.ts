@@ -10,6 +10,7 @@ import {
   SOL_NATIVE_TOKEN_ADDRESS,
   SOL_NATIVE_TOKEN_ADDRESS2,
   Token,
+  logger,
 } from '@binkai/core';
 
 import axios, { AxiosInstance, AxiosError } from 'axios';
@@ -180,7 +181,7 @@ export class JupiterProvider extends BaseSwapProvider {
         lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
       };
     } catch (error) {
-      console.error('Error canceling trigger orders:', error);
+      logger.error('Error canceling trigger orders:', error);
       throw error;
     }
   }
@@ -280,7 +281,7 @@ export class JupiterProvider extends BaseSwapProvider {
           autoSlippageCollisionUsdValue: params.autoSlippageCollisionUsdValue,
         }),
       };
-      console.log('🚀 ~ JupiterProvider ~ getQuoteJupiter ~ queryParams:', queryParams);
+      logger.info('🚀 ~ JupiterProvider ~ getQuoteJupiter ~ queryParams:', queryParams);
 
       const response = await this.api.get<JupiterQuoteResponse>('/quote', {
         params: queryParams,
@@ -318,7 +319,7 @@ export class JupiterProvider extends BaseSwapProvider {
 
       return data?.data;
     } catch (error) {
-      console.error('Error fetching token prices:', error);
+      logger.error('Error fetching token prices:', error);
       throw new Error('Jupiter not support this token');
     }
   }
@@ -341,8 +342,8 @@ export class JupiterProvider extends BaseSwapProvider {
         this.getToken(params.toToken, params.network),
       ]);
 
-      console.log('🤖 Jupiter quote sourceToken:', sourceToken);
-      console.log('🤖 Jupiter quote destinationToken:', destinationToken);
+      logger.info('🤖 Jupiter quote sourceToken:', sourceToken);
+      logger.info('🤖 Jupiter quote destinationToken:', destinationToken);
 
       let adjustedAmount = params.amount;
 
@@ -355,7 +356,7 @@ export class JupiterProvider extends BaseSwapProvider {
         );
 
         if (adjustedAmount !== params.amount) {
-          console.log(
+          logger.info(
             `🤖 Jupiter adjusted input amount from ${params.amount} to ${adjustedAmount}`,
           );
         }
@@ -458,7 +459,7 @@ export class JupiterProvider extends BaseSwapProvider {
       this.storeQuote(quote);
       return quote;
     } catch (error: unknown) {
-      //console.error('Error getting quote:', error);
+      logger.error('Error getting quote:', error);
       throw new Error(
         `Failed to get quote: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );

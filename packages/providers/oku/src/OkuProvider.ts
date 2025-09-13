@@ -8,7 +8,7 @@ import {
   isSolanaNetwork,
 } from '@binkai/swap-plugin';
 import { ethers, Contract, Interface, Provider } from 'ethers';
-import { EVM_NATIVE_TOKEN_ADDRESS, NetworkName, Token } from '@binkai/core';
+import { EVM_NATIVE_TOKEN_ADDRESS, NetworkName, Token, logger } from '@binkai/core';
 // Enhanced interface with better type safety
 interface TokenInfo extends Token {
   // Inherits all Token properties and maintains DRY principle
@@ -95,7 +95,7 @@ export class OkuProvider extends BaseSwapProvider {
         );
 
         if (adjustedAmount !== params.amount) {
-          console.log(`🤖 OKu adjusted input amount from ${params.amount} to ${adjustedAmount}`);
+          logger.info(`🤖 OKu adjusted input amount from ${params.amount} to ${adjustedAmount}`);
         }
       }
 
@@ -208,7 +208,7 @@ export class OkuProvider extends BaseSwapProvider {
         },
       };
 
-      console.log('log', quote);
+      logger.info('log', quote);
 
       this.quotes.set(quoteId, { quote, expiresAt: Date.now() + CONSTANTS.QUOTE_EXPIRY });
 
@@ -218,7 +218,7 @@ export class OkuProvider extends BaseSwapProvider {
 
       return quote;
     } catch (error: unknown) {
-      console.error('Error getting quote:', error);
+      logger.error('Error getting quote:', error);
       throw new Error(
         `Failed to get quote: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );

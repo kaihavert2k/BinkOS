@@ -6,7 +6,7 @@ import {
   parseTokenAmount,
 } from '@binkai/swap-plugin';
 import { Contract, ethers, Provider } from 'ethers';
-import { EVM_NATIVE_TOKEN_ADDRESS, NetworkName, Token } from '@binkai/core';
+import { EVM_NATIVE_TOKEN_ADDRESS, NetworkName, Token, logger } from '@binkai/core';
 import { OrbsABI } from './abis/Orbs';
 import { WrapTokenABI } from './abis/WrapToken';
 
@@ -114,7 +114,7 @@ export class ThenaProvider extends BaseSwapProvider {
           params.network,
         );
         if (adjustedAmount !== params.amount) {
-          console.log(`🤖 Thena adjusted input amount from ${params.amount} to ${adjustedAmount}`);
+          logger.info(`🤖 Thena adjusted input amount from ${params.amount} to ${adjustedAmount}`);
         }
       }
 
@@ -189,7 +189,7 @@ export class ThenaProvider extends BaseSwapProvider {
           params?.slippage,
           amountIn.toString(),
         );
-        console.log('optimalRoute', optimalRoute);
+        logger.info('optimalRoute', optimalRoute);
 
         swapTransactionData = await this.buildSwapRouteTransaction(optimalRoute, userAddress);
         if (!swapTransactionData) throw new Error('No swap routes available from Thena');
@@ -209,7 +209,7 @@ export class ThenaProvider extends BaseSwapProvider {
 
       return swapQuote;
     } catch (error: unknown) {
-      console.error('Error getting quote:', error);
+      logger.error('Error getting quote:', error);
       throw new Error(
         `Failed to get quote: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -320,7 +320,7 @@ export class ThenaProvider extends BaseSwapProvider {
 
       return tx;
     } catch (error) {
-      console.error('Error creating TWAP order:', error);
+      logger.error('Error creating TWAP order:', error);
       throw error;
     }
   }
@@ -356,7 +356,7 @@ export class ThenaProvider extends BaseSwapProvider {
       const tokenInfo = data.data.find((token: any) => token.address === address);
       return tokenInfo;
     } catch (error) {
-      console.error('Error fetching token info:', error);
+      logger.error('Error fetching token info:', error);
       throw new Error('Thena not support this token');
     }
   }

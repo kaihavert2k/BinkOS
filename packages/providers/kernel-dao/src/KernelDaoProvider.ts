@@ -6,7 +6,7 @@ import {
 } from '@binkai/staking-plugin';
 import { ethers, Contract, Provider } from 'ethers';
 import { StakerGatewayABI } from './abis/StakerGateway';
-import { EVM_NATIVE_TOKEN_ADDRESS, NetworkName, Token } from '@binkai/core';
+import { EVM_NATIVE_TOKEN_ADDRESS, NetworkName, Token, logger } from '@binkai/core';
 import { isSolanaNetwork } from '@binkai/staking-plugin';
 import { isWithinTolerance, parseTokenAmount } from '@binkai/staking-plugin';
 
@@ -28,7 +28,7 @@ enum ChainId {
 export class KernelDaoProvider extends BaseStakingProvider {
   private chainId: ChainId;
   private factory: any;
-  protected GAS_BUFFER: bigint = ethers.parseEther('0.0001');
+  protected GAS_BUFFER: bigint = ethers.parseEther('0.0003');
 
   constructor(provider: Provider, chainId: ChainId = ChainId.BSC) {
     // Create a Map with BNB network and the provider
@@ -106,7 +106,7 @@ export class KernelDaoProvider extends BaseStakingProvider {
         );
 
         if (adjustedAmount !== params.amountA) {
-          console.log(
+          logger.info(
             `🤖 KernelDao adjusted input amount from ${params.amountA} to ${adjustedAmount}`,
           );
         }
@@ -139,7 +139,7 @@ export class KernelDaoProvider extends BaseStakingProvider {
 
       return quote;
     } catch (error: unknown) {
-      console.error('Error getting quote:', error);
+      logger.error('Error getting quote:', error);
       throw new Error(
         `Failed to get quote: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -152,7 +152,7 @@ export class KernelDaoProvider extends BaseStakingProvider {
     amountB: bigint,
     type: 'stake' | 'unstake' | 'supply' | 'withdraw' | 'deposit' = 'stake',
   ) {
-    console.log(
+    logger.info(
       '🤖 Building staking route transaction for kernel dao provider',
       to,
       amountA,
@@ -188,7 +188,7 @@ export class KernelDaoProvider extends BaseStakingProvider {
         };
       }
     } catch (error) {
-      console.error('Error building staking transaction:', error);
+      logger.error('Error building staking transaction:', error);
       throw new Error(
         `Failed to build staking transaction: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -317,7 +317,7 @@ export class KernelDaoProvider extends BaseStakingProvider {
 
       return { isValid: true };
     } catch (error) {
-      console.error('Error checking balance:', error);
+      logger.error('Error checking balance:', error);
       return {
         isValid: false,
         message: `Failed to check balance: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -346,7 +346,7 @@ export class KernelDaoProvider extends BaseStakingProvider {
         tokens: [bnbInfo],
       };
     } catch (error) {
-      console.error('Error getting BNB staking balance:', error);
+      logger.error('Error getting BNB staking balance:', error);
       throw new Error(
         `Failed to get BNB staking balance: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );

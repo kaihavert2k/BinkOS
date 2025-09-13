@@ -1,4 +1,10 @@
-import { BaseTool, CustomDynamicStructuredTool, IToolConfig, ToolProgress } from '@binkai/core';
+import {
+  BaseTool,
+  CustomDynamicStructuredTool,
+  IToolConfig,
+  ToolProgress,
+  logger,
+} from '@binkai/core';
 import { z } from 'zod';
 import { IImageProvider } from './types';
 
@@ -64,7 +70,7 @@ export class CreateImageTool extends BaseTool {
       ) => {
         try {
           const { prompt, image_url, provider: providerName } = args;
-          console.log('🤖 Create image Args:', args);
+          logger.info('🤖 Create image Args:', args);
 
           onProgress?.({
             progress: 30,

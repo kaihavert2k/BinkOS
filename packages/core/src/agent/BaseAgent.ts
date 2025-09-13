@@ -13,6 +13,7 @@ import {
   IHumanReviewCallback,
   IToolExecutionCallback,
 } from './callbacks';
+import { IModel } from '../model/types';
 
 export abstract class BaseAgent implements IAgent {
   protected tools: DynamicStructuredTool[] = [];
@@ -91,7 +92,6 @@ export abstract class BaseAgent implements IAgent {
   public notifyAskUser(data: AskUserData): void {
     this.callbackManager.notifyAskUser(data);
   }
-
   /**
    * Register a callback for tool execution events
    * @param callback The callback to register
@@ -138,4 +138,5 @@ export abstract class BaseAgent implements IAgent {
   abstract getWallet(): IWallet;
   abstract getNetworks(): NetworksConfig['networks'];
   abstract registerDatabase(db: DatabaseAdapter): Promise<void>;
+  abstract getModel(): IModel;
 }

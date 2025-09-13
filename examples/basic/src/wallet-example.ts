@@ -8,6 +8,8 @@ import {
   settings,
   Wallet,
   NetworkName,
+  logger,
+  OpenAIModel,
 } from '@binkai/core';
 import { SwapPlugin } from '@binkai/swap-plugin';
 import { PancakeSwapProvider } from '@binkai/pancakeswap-provider';
@@ -17,6 +19,9 @@ import { BirdeyeProvider } from '@binkai/birdeye-provider';
 import { TokenPlugin } from '@binkai/token-plugin';
 
 async function main() {
+  //configure enable logger
+  logger.enable();
+
   const BNB_RPC = 'https://bsc-dataseed1.binance.org';
   const SOL_RPC = 'https://api.mainnet-beta.solana.com';
   const ETH_RPC = 'https://eth.llamarpc.com';
@@ -129,10 +134,17 @@ async function main() {
   console.log('✓ Token plugin initialized\n');
 
   // Create agent instance
+  const llm = new OpenAIModel({
+    apiKey: settings.get('OPENAI_API_KEY') || '',
+    model: 'gpt-4o-mini',
+  });
+
   const agent = new Agent(
+    llm,
     {
-      model: 'gpt-4o-mini',
       temperature: 0,
+      systemPrompt:
+        'You are a BINK AI agent. You are able to perform bridge and get token information on multiple chains. If you do not have the token address, you can use the symbol to get the token information before performing a bridge.',
     },
     wallet,
     networks,

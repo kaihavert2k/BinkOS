@@ -6,6 +6,7 @@ import {
   IToolConfig,
   NetworkName,
   ToolProgress,
+  logger,
 } from '@binkai/core';
 import { ProviderRegistry } from './ProviderRegistry';
 import { CreateTokenParams, ITokenProvider, TokenInfo } from './types';
@@ -33,7 +34,7 @@ export class CreateTokenTool extends BaseTool {
 
     // Register the default token provider first
     this.registerProvider(this.defaultTokenProvider);
-    console.log(
+    logger.info(
       '✓ Default token provider registered with',
       Object.keys(defaultTokens).length,
       'networks and',
@@ -49,7 +50,7 @@ export class CreateTokenTool extends BaseTool {
 
   registerProvider(provider: ITokenProvider): void {
     this.registry.registerProvider(provider);
-    console.log('✓ Provider registered CreateTokenTool', provider.constructor.name);
+    logger.info('✓ Provider registered CreateTokenTool', provider.constructor.name);
     // Add provider's supported networks
     provider.getSupportedNetworks().forEach(network => {
       this.supportedNetworks.add(network);
@@ -120,7 +121,7 @@ export class CreateTokenTool extends BaseTool {
   }
 
   createTool(): CustomDynamicStructuredTool {
-    console.log('🛠️ Creating create token tool');
+    logger.info('🛠️ Creating create token tool');
     return {
       name: this.getName(),
       description: this.getDescription(),
@@ -141,7 +142,7 @@ export class CreateTokenTool extends BaseTool {
             amount,
             provider: preferredProvider,
           } = args;
-          console.log('🤖 Create token Args:', args);
+          logger.info('🤖 Create token Args:', args);
 
           // STEP 1: Validate network
           const supportedNetworks = this.getSupportedNetworks();
@@ -200,7 +201,7 @@ export class CreateTokenTool extends BaseTool {
               }
             } else {
               const providers = this.registry.getProvidersByNetwork(network);
-              console.log('🤖 Providers:', providers);
+              logger.info('🤖 Providers:', providers);
               selectedProvider = providers[1];
             }
           } catch (error: any) {
@@ -238,7 +239,7 @@ export class CreateTokenTool extends BaseTool {
               accessToken,
               signature,
             );
-            console.log('🤖 Create Tx:', tx);
+            logger.info('🤖 Create Tx:', tx);
           } catch (error: any) {
             throw error;
           }
@@ -296,7 +297,7 @@ export class CreateTokenTool extends BaseTool {
             }
           }
 
-          console.log('🤖 Data', {
+          logger.info('🤖 Data', {
             status: 'success',
             provider: selectedProvider.getName(),
             token,

@@ -10,6 +10,8 @@ import {
   IToolExecutionCallback,
   ToolExecutionState,
   ToolExecutionData,
+  logger,
+  OpenAIModel,
 } from '@binkai/core';
 import { StakingPlugin } from '@binkai/staking-plugin';
 import { KernelDaoProvider } from '@binkai/kernel-dao-provider';
@@ -17,6 +19,8 @@ import { WalletPlugin } from '@binkai/wallet-plugin';
 import { BnbProvider } from '@binkai/rpc-provider';
 import { BirdeyeProvider } from '@binkai/birdeye-provider';
 import { AlchemyProvider } from '@binkai/alchemy-provider';
+import { ListaProvider } from '@binkai/lista-provider';
+import { VenusProvider } from '@binkai/venus-provider';
 // Hardcoded RPC URLs for demonstration
 const BNB_RPC = 'https://bsc-dataseed1.binance.org';
 const ETH_RPC = 'https://eth.llamarpc.com';
@@ -60,6 +64,9 @@ async function main() {
   }
 
   console.log('🔑 OpenAI API key found\n');
+
+  //configure enable logger
+  logger.enable();
 
   // Define available networks
   console.log('📡 Configuring networks...');
@@ -129,12 +136,17 @@ async function main() {
   });
   // Create an agent with OpenAI
   console.log('🤖 Initializing AI agent...');
+  const llm = new OpenAIModel({
+    apiKey: settings.get('OPENAI_API_KEY') || '',
+    model: 'gpt-4o-mini',
+  });
+
   const agent = new Agent(
+    llm,
     {
-      model: 'gpt-4o',
       temperature: 0,
       systemPrompt:
-        'You are a BINK AI agent. You are able to perform swaps and get token information on multiple chains. If you do not have the token address, you can use the symbol to get the token information before performing a staking or unstaking.',
+        'You are a BINK AI agent. You are able to perform bridge and get token information on multiple chains. If you do not have the token address, you can use the symbol to get the token information before performing a bridge.',
     },
     wallet,
     networks,
@@ -157,12 +169,13 @@ async function main() {
 
   // Create providers with proper chain IDs
   const kernelDao = new KernelDaoProvider(provider, 56);
-
+  const venusStaking = new VenusProvider(provider, 56);
+  const listaStaking = new ListaProvider(provider, 56);
   // Configure the plugin with supported chains
   await stakingPlugin.initialize({
     defaultSlippage: 0.5,
     defaultChain: 'bnb',
-    providers: [kernelDao],
+    providers: [kernelDao, venusStaking, listaStaking],
     supportedChains: ['bnb'], // These will be intersected with agent's networks
   });
   console.log('✓ Staking plugin initialized\n');
@@ -177,9 +190,9 @@ async function main() {
   // Example 1: Very basic staking (explicit everything)
   console.log('💱 Example 1 [EASY]: Basic staking with explicit parameters');
   const basicStakeResult = await agent.execute({
-    input: `withdraw 0.001 BNB on kernel dao protocol on BNB Chain`,
+    input: `Which protocol has the highest APY for BNB Staking?`,
   });
-  // console.log('✓ Basic staking result:', basicStakeResult, '\n');
+  console.log('✓ Basic staking result:', basicStakeResult, '\n');
 
   // const myBalanceStaked = await agent.execute({
   //   input: `Get my BNB staked on kernel dao protocol on BNB Chain`,

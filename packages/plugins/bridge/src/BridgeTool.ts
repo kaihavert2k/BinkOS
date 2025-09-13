@@ -6,6 +6,7 @@ import {
   CustomDynamicStructuredTool,
   IToolConfig,
   ToolProgress,
+  logger,
 } from '@binkai/core';
 import { ProviderRegistry } from './ProviderRegistry';
 import { IBridgeProvider, BridgeQuote, BridgeParams, BasicToken } from './types';
@@ -31,7 +32,7 @@ export class BridgeTool extends BaseTool {
 
   registerProvider(provider: IBridgeProvider): void {
     this.registry.registerProvider(provider);
-    console.log('✓ Provider registered', provider.constructor.name);
+    logger.info('✓ Provider registered', provider.constructor.name);
     // Add provider's supported chains
     provider.getSupportedNetworks().forEach(network => {
       this.supportedNetworks.add(network);
@@ -130,11 +131,11 @@ export class BridgeTool extends BaseTool {
     const quotes = await Promise.all(
       providers.map(async provider => {
         try {
-          console.log('🤖 Getting quote from', provider.getName());
+          logger.info('🤖 Getting quote from', provider.getName());
           const quote = await provider.getQuote(params, fromWalletAddress, toWalletAddress);
           return { provider, quote };
         } catch (error) {
-          console.warn(`Failed to get quote from ${provider.getName()}:`, error);
+          logger.warn(`Failed to get quote from ${provider.getName()}:`, error);
           return null;
         }
       }),
@@ -207,8 +208,8 @@ export class BridgeTool extends BaseTool {
     const fromWalletAddress = await wallet.getAddress(fromNetwork);
     const toWalletAddress = await wallet.getAddress(toNetwork);
 
-    console.log('🚀 ~ BridgeTool ~ createTool ~ fromWalletAddress:', fromWalletAddress);
-    console.log('🚀 ~ BridgeTool ~ createTool ~ toWalletAddress:', toWalletAddress);
+    logger.info('🚀 ~ BridgeTool ~ createTool ~ fromWalletAddress:', fromWalletAddress);
+    logger.info('🚀 ~ BridgeTool ~ createTool ~ toWalletAddress:', toWalletAddress);
 
     // Validate chain is supported
     const supportedNetworks = this.getSupportedNetworks();
@@ -226,7 +227,7 @@ export class BridgeTool extends BaseTool {
       amount: amount,
       type: amountType,
     };
-    console.log('🚀 ~ BridgeTool ~ func: ~ bridgeParams:', bridgeParams);
+    logger.info('🚀 ~ BridgeTool ~ func: ~ bridgeParams:', bridgeParams);
 
     let selectedProvider: IBridgeProvider;
     let quote: BridgeQuote;
@@ -245,7 +246,7 @@ export class BridgeTool extends BaseTool {
         }
         quote = await selectedProvider.getQuote(bridgeParams, fromWalletAddress, toWalletAddress);
       } catch (error) {
-        console.warn(`Failed to get quote from preferred provider ${preferredProvider}:`, error);
+        logger.warn(`Failed to get quote from preferred provider ${preferredProvider}:`, error);
         const bestQuote = await this.findBestQuote(
           {
             ...bridgeParams,
@@ -317,7 +318,7 @@ export class BridgeTool extends BaseTool {
     );
   }
   createTool(): CustomDynamicStructuredTool {
-    console.log('✓ Creating tool', this.getName());
+    logger.info('✓ Creating tool', this.getName());
     return {
       name: this.getName(),
       description: this.getDescription(),
@@ -339,7 +340,7 @@ export class BridgeTool extends BaseTool {
             provider: preferredProvider,
           } = args;
 
-          console.log('🤖 Bridge Args:', args);
+          logger.info('🤖 Bridge Args:', args);
           if (this.agent.isMockResponseTool()) {
             return this.mockResponseTool(args);
           }
@@ -366,7 +367,7 @@ export class BridgeTool extends BaseTool {
             message: `Found best rate with ${selectedProvider.getName()}. Preparing bridge transaction.`,
           });
 
-          console.log('🚀 ~ BridgeTool ~ func: ~ bridgeTx:', bridgeTx);
+          logger.info('🚀 ~ BridgeTool ~ func: ~ bridgeTx:', bridgeTx);
 
           onProgress?.({
             progress: 70,
@@ -397,7 +398,7 @@ export class BridgeTool extends BaseTool {
             toNetwork,
           });
         } catch (error) {
-          console.error('🚀 ~ BridgeTool ~ func: ~ error:', error);
+          logger.error('🚀 ~ BridgeTool ~ func: ~ error:', error);
           return JSON.stringify({
             status: 'error',
             message: error instanceof Error ? error.message : 'Unknown error',

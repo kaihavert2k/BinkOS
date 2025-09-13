@@ -1,7 +1,7 @@
 import { SwapQuote, SwapParams, NetworkProvider, BaseSwapProvider } from '@binkai/swap-plugin';
 import { ethers, Provider } from 'ethers';
 import CryptoJS from 'crypto-js';
-import { EVM_NATIVE_TOKEN_ADDRESS, NetworkName, Token } from '@binkai/core';
+import { EVM_NATIVE_TOKEN_ADDRESS, NetworkName, Token, logger } from '@binkai/core';
 
 // Constants for better maintainability
 const CONSTANTS = {
@@ -112,7 +112,7 @@ export class OkxProvider extends BaseSwapProvider {
 
     const path = `/api/v5/dex/aggregator/swap?amount=${amount}&chainId=${this.chainId}&fromTokenAddress=${fromToken.address}&toTokenAddress=${toToken.address}&slippage=${slippageOKX}&userWalletAddress=${userAddress}`;
 
-    console.log('🤖 OKX Path', path);
+    logger.info('🤖 OKX Path', path);
 
     const headers = this.generateApiHeaders(path, isoString);
 
@@ -122,7 +122,7 @@ export class OkxProvider extends BaseSwapProvider {
     });
 
     const data = await response.json();
-    console.log('🚀 ~ OkxProvider ~ data:', data);
+    logger.info('🚀 ~ OkxProvider ~ data:', data);
     if (!data.data || data.data.length === 0) {
       throw new Error('No data returned from OKX');
     }
@@ -178,7 +178,7 @@ export class OkxProvider extends BaseSwapProvider {
         );
 
         if (adjustedAmount !== params.amount) {
-          console.log(`🤖 Okx adjusted input amount from ${params.amount} to ${adjustedAmount}`);
+          logger.info(`🤖 Okx adjusted input amount from ${params.amount} to ${adjustedAmount}`);
         }
       }
 
@@ -210,7 +210,7 @@ export class OkxProvider extends BaseSwapProvider {
         userAddress,
         params.slippage,
       );
-      console.log('🚀 ~ OkxProvider ~ getQuote ~ result:', result);
+      logger.info('🚀 ~ OkxProvider ~ getQuote ~ result:', result);
 
       const inputAmount = result.routerResult.fromTokenAmount;
       const outputAmount = result.routerResult.toTokenAmount;
@@ -254,7 +254,7 @@ export class OkxProvider extends BaseSwapProvider {
 
       return quote;
     } catch (error: unknown) {
-      console.error('Error getting quote:', error);
+      logger.error('Error getting quote:', error);
       throw new Error(
         `Failed to get quote: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );

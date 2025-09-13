@@ -1,4 +1,4 @@
-import { EVM_NATIVE_TOKEN_ADDRESS, NetworkName, Token } from '@binkai/core';
+import { EVM_NATIVE_TOKEN_ADDRESS, NetworkName, Token, logger } from '@binkai/core';
 import {
   IStakingProvider,
   StakingQuote,
@@ -188,7 +188,7 @@ export abstract class BaseStakingProvider implements IStakingProvider {
     // If amount is too small compared to gas buffer
     if (amountBN <= gasBuffer) {
       throw new Error(
-        `Amount too small. Minimum amount should be greater than ${ethers.formatEther(gasBuffer)} native token to cover gas`,
+        `Amount too small. Minimum amount should be greater than ${ethers.formatUnits(gasBuffer, decimals)} native token to cover gas`,
       );
     }
 
@@ -213,24 +213,24 @@ export abstract class BaseStakingProvider implements IStakingProvider {
 
     // If the amount was adjusted, log it
     if (adjustedAmount !== amount) {
-      console.log(
+      logger.info(
         '🤖 Adjusted native token amount:',
         adjustedAmount,
         '(adjusted for available balance)',
       );
     } else if (maxSpendableBN < amountBN) {
       // If amount wasn't adjusted but user doesn't have enough balance, reduce to max spendable
-      console.log(
+      logger.info(
         '🤖 Adjusted amount for gas buffer:',
         maxSpendable,
-        `(insufficient balance for full amount + ${ethers.formatEther(gasBuffer)} gas)`,
+        `(insufficient balance for full amount + ${ethers.formatUnits(gasBuffer, decimals)} gas)`,
       );
       return maxSpendable;
     } else {
-      console.log(
+      logger.info(
         '🤖 Using full amount:',
         amount,
-        `(sufficient balance for amount + ${ethers.formatEther(gasBuffer)} gas)`,
+        `(sufficient balance for amount + ${ethers.formatUnits(gasBuffer, decimals)} gas)`,
       );
     }
 
@@ -333,7 +333,7 @@ export abstract class BaseStakingProvider implements IStakingProvider {
 
       return { isValid: true };
     } catch (error) {
-      console.error('Error checking balance:', error);
+      logger.error('Error checking balance:', error);
       return {
         isValid: false,
         message: `Failed to check balance: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -438,7 +438,7 @@ export abstract class BaseStakingProvider implements IStakingProvider {
         spender: storedData.quote.tx?.to || '',
       };
     } catch (error) {
-      console.error('Error building Staking transaction:', error);
+      logger.error('Error building Staking transaction:', error);
       throw new Error(
         `Failed to build Staking transaction: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -490,7 +490,7 @@ export abstract class BaseStakingProvider implements IStakingProvider {
         return adjustTokenAmount(amount, formattedBalance, decimals, this.TOLERANCE_PERCENTAGE);
       }
     } catch (error) {
-      console.error('Error in adjustAmount:', error);
+      logger.error('Error in adjustAmount:', error);
       // In case of any error, return the original amount
       return amount;
     }
@@ -538,7 +538,7 @@ export abstract class BaseStakingProvider implements IStakingProvider {
           }
         }
       } catch (error) {
-        console.error('Error cleaning up caches:', error);
+        logger.error('Error cleaning up caches:', error);
       }
     }, CLEANUP_INTERVAL);
   }
@@ -561,7 +561,7 @@ export abstract class BaseStakingProvider implements IStakingProvider {
     };
   }
 
-  async buildClaimTransaction(uuid: bigint): Promise<Transaction> {
+  async buildClaimTransaction(uuid: string): Promise<Transaction> {
     return {
       to: '',
       data: '',

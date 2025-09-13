@@ -4,6 +4,7 @@ import {
   SOL_NATIVE_TOKEN_ADDRESS,
   SOL_NATIVE_TOKEN_ADDRESS2,
   Token,
+  logger,
 } from '@binkai/core';
 import { ethers, Contract, Interface, Provider } from 'ethers';
 import { Connection, PublicKey } from '@solana/web3.js';
@@ -135,7 +136,7 @@ export function createTokenCache(cacheTTL: number = DEFAULT_CACHE_TTL) {
           return cached.token;
         }
 
-        console.log('🤖 getToken Solana ', tokenAddress);
+        logger.info('🤖 getToken Solana ', tokenAddress);
 
         const connection = getSolanaProviderForNetwork(providers, network, providerName);
         //const connection = new Connection(network);

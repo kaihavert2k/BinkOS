@@ -13,7 +13,7 @@ import {
   CHAIN_MAPPING,
   SupportedChain,
 } from './types';
-import { NetworkName } from '@binkai/core';
+import { NetworkName, logger } from '@binkai/core';
 import { IWalletProvider, WalletInfo } from '@binkai/wallet-plugin';
 import { ethers } from 'ethers';
 export class AlchemyProvider implements ITokenProvider, IWalletProvider {
@@ -89,10 +89,10 @@ export class AlchemyProvider implements ITokenProvider, IWalletProvider {
 
   async getTokenInfo(params: TokenQueryParams): Promise<TokenInfo> {
     try {
-      console.log('getTokenInfo alchemy:', params);
+      logger.info('getTokenInfo alchemy:', params);
 
       const walletInfo = await this.getWalletInfo(params.query, params.network);
-      console.log('walletInfo:', walletInfo);
+      logger.info('walletInfo:', walletInfo);
 
       return {} as TokenInfo;
     } catch (error) {
@@ -151,8 +151,9 @@ export class AlchemyProvider implements ITokenProvider, IWalletProvider {
               symbol: token?.tokenMetadata?.symbol,
               name: token?.tokenMetadata?.name,
               decimals: token?.tokenMetadata?.decimals,
-              usdValue: token?.tokenPrices[0]?.value,
+              usdValue: token?.tokenPrices?.[0]?.value || 0,
               balance: ethers.formatUnits(token?.tokenBalance, token?.tokenMetadata?.decimals),
+              network: network,
             };
           });
       }

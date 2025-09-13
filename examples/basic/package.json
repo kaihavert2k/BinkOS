@@ -7,6 +7,7 @@
     "url": "https://github.com/Bink-AI/BinkOS"
   },
   "scripts": {
+    "models": "ts-node src/multi-models-example.ts",
     "start": "ts-node src/example.ts",
     "swap": "ts-node src/swap-example.ts",
     "swap-okx": "ts-node src/swap-example-okx.ts",
@@ -15,6 +16,7 @@
     "bridge": "ts-node src/bridge-example-debridge.ts",
     "swap-thena": "ts-node src/swap-example-thena.ts",
     "swap-four-meme": "ts-node src/swap-example-four-meme.ts",
+    "staking": "ts-node src/staking-example.ts",
     "staking-venus": "ts-node src/staking-example-venus.ts",
     "staking-kernel": "ts-node src/staking-example-kernel.ts",
     "staking-lista": "ts-node src/staking-example-lista.ts",
@@ -30,7 +32,9 @@
     "limit-order-thena": "ts-node src/limit-order-example-thena.ts",
     "limit-order": "ts-node src/limit-order-example.ts",
     "get-limit-order": "ts-node src/get-limit-order-example.ts",
-    "cancel-limit-order": "ts-node src/cancel-limit-order-example.ts"
+    "cancel-limit-order": "ts-node src/cancel-limit-order-example.ts",
+    "staking-planning": "ts-node src/staking-example-planning.ts",
+    "testcase": "ts-node src/testcase.ts"
   },
   "dependencies": {
     "@binkai/alchemy-provider": "workspace:*",

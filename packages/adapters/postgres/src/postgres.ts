@@ -1,5 +1,5 @@
 import pg, { QueryConfig, QueryConfigValues, QueryResult, QueryResultRow } from 'pg';
-import { DatabaseAdapter, UUID } from '@binkai/core';
+import { DatabaseAdapter, UUID, logger } from '@binkai/core';
 import { MessageEntity, UserEntity } from '@binkai/core';
 import fs from 'fs';
 import path from 'path';
@@ -35,7 +35,7 @@ export class PostgresDatabaseAdapter extends DatabaseAdapter<Pool> {
     });
 
     this.pool.on('error', (err: any) => {
-      console.error('Unexpected pool error', err);
+      logger.error('Unexpected pool error', err);
       this.handlePoolError(err);
     });
 
@@ -81,14 +81,14 @@ export class PostgresDatabaseAdapter extends DatabaseAdapter<Pool> {
           const jitter = Math.random() * this.jitterMax;
           const delay = backoffDelay + jitter;
 
-          console.warn(`Database operation failed (attempt ${attempt}/${this.maxRetries}):`, {
+          logger.warn(`Database operation failed (attempt ${attempt}/${this.maxRetries}):`, {
             error: error instanceof Error ? error.message : String(error),
             nextRetryIn: `${(delay / 1000).toFixed(1)}s`,
           });
 
           await new Promise(resolve => setTimeout(resolve, delay));
         } else {
-          console.error('Max retry attempts reached:', {
+          logger.error('Max retry attempts reached:', {
             error: error instanceof Error ? error.message : String(error),
             totalAttempts: attempt,
           });
@@ -101,7 +101,7 @@ export class PostgresDatabaseAdapter extends DatabaseAdapter<Pool> {
   }
 
   private async handlePoolError(error: Error) {
-    console.error('Pool error occurred, attempting to reconnect', {
+    logger.error('Pool error occurred, attempting to reconnect', {
       error: error.message,
     });
 
@@ -116,9 +116,9 @@ export class PostgresDatabaseAdapter extends DatabaseAdapter<Pool> {
       });
 
       await this.checkDatabaseConnection();
-      console.info('Pool reconnection successful');
+      logger.info('Pool reconnection successful');
     } catch (reconnectError) {
-      console.error('Failed to reconnect pool', {
+      logger.error('Failed to reconnect pool', {
         error: reconnectError instanceof Error ? reconnectError.message : String(reconnectError),
       });
       throw reconnectError;
@@ -149,7 +149,7 @@ export class PostgresDatabaseAdapter extends DatabaseAdapter<Pool> {
           `);
 
       if (!rows[0].exists) {
-        console.info('Applying database schema - tables');
+        logger.info('Applying database schema - tables');
         const schema = fs.readFileSync(path.resolve(__dirname, '../migration.sql'), 'utf8');
         await client.query(schema);
       }
@@ -173,10 +173,10 @@ export class PostgresDatabaseAdapter extends DatabaseAdapter<Pool> {
       client = await this.pool.connect();
       // TODO  confirm connection success
       const result = await client.query('SELECT NOW()');
-      console.info('Database connection test successful:', result.rows[0]);
+      logger.info('Database connection test successful:', result.rows[0]);
       return true;
     } catch (error) {
-      console.error('Database connection test failed:', error);
+      logger.error('Database connection test failed:', error);
       throw new Error(`Failed to connect to database: ${(error as Error).message}`);
     } finally {
       if (client) client.release();
@@ -186,9 +186,9 @@ export class PostgresDatabaseAdapter extends DatabaseAdapter<Pool> {
   async cleanup(): Promise<void> {
     try {
       await this.pool.end();
-      console.info('Database pool closed');
+      logger.info('Database pool closed');
     } catch (error) {
-      console.error('Error closing database pool:', error);
+      logger.error('Error closing database pool:', error);
     }
   }
 
@@ -199,7 +199,7 @@ export class PostgresDatabaseAdapter extends DatabaseAdapter<Pool> {
         [userId],
       );
       if (rows.length === 0) {
-        console.debug('Account not found:', { userId });
+        logger.debug('Account not found:', { userId });
         return null;
       }
 
@@ -227,10 +227,10 @@ export class PostgresDatabaseAdapter extends DatabaseAdapter<Pool> {
             JSON.stringify(user.metadata),
           ],
         );
-        console.debug('User created successfully');
+        logger.debug('User created successfully');
         return true;
       } catch (error) {
-        console.error('Error creating user:', {
+        logger.error('Error creating user:', {
           error: error instanceof Error ? error.message : String(error),
           address: user.address,
         });
@@ -243,7 +243,7 @@ export class PostgresDatabaseAdapter extends DatabaseAdapter<Pool> {
     return this.wrapDatabase(async () => {
       try {
         if (!user.address) {
-          console.error('Address is required');
+          logger.error('Address is required');
           return null;
         }
         const { rows } = await this.pool.query('SELECT * FROM users WHERE address = $1', [
@@ -258,7 +258,7 @@ export class PostgresDatabaseAdapter extends DatabaseAdapter<Pool> {
         ]);
         return userRows[0];
       } catch (error) {
-        console.error('Error creating user:', {
+        logger.error('Error creating user:', {
           error: error instanceof Error ? error.message : String(error),
           address: user.address,
         });
@@ -336,7 +336,7 @@ export class PostgresDatabaseAdapter extends DatabaseAdapter<Pool> {
         );
         return true;
       } catch (error) {
-        console.error('Error creating message:', { error });
+        logger.error('Error creating message:', { error });
         return false;
       }
     }, 'createMessages');
@@ -364,7 +364,7 @@ export class PostgresDatabaseAdapter extends DatabaseAdapter<Pool> {
         );
         return true;
       } catch (error) {
-        console.error('Error creating message:', { error });
+        logger.error('Error creating message:', { error });
         return false;
       }
     }, 'createMessage');
@@ -405,7 +405,7 @@ export class PostgresDatabaseAdapter extends DatabaseAdapter<Pool> {
         );
         return true;
       } catch (error) {
-        console.error(`Error soft deleting ${tableName}:`, {
+        logger.error(`Error soft deleting ${tableName}:`, {
           error: error instanceof Error ? error.message : String(error),
           id,
         });
@@ -434,7 +434,7 @@ export class PostgresDatabaseAdapter extends DatabaseAdapter<Pool> {
       );
 
       if (rows.length === 0) {
-        console.debug('User not found:', { address });
+        logger.debug('User not found:', { address });
         return null;
       }
 

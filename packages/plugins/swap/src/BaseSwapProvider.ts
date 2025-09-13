@@ -4,6 +4,7 @@ import {
   SOL_NATIVE_TOKEN_ADDRESS,
   SOL_NATIVE_TOKEN_ADDRESS2,
   Token,
+  logger,
 } from '@binkai/core';
 import { ISwapProvider, SwapQuote, SwapParams, Transaction, NetworkProvider } from './types';
 import { ethers, Contract, Interface, Provider } from 'ethers';
@@ -48,9 +49,9 @@ export abstract class BaseSwapProvider implements ISwapProvider {
     [NetworkName.ARBITRUM]: ethers.parseEther('0.001'), // 0.001 ETH
     [NetworkName.OPTIMISM]: ethers.parseEther('0.001'), // 0.001 ETH
     [NetworkName.BNB]: ethers.parseEther('0.0001'), // 0.001 BNB
-    [NetworkName.SOLANA]: BigInt(10000000), // 0.001 SOL in lamports
+    [NetworkName.SOLANA]: BigInt(1000000), // 0.001 SOL in lamports
     [NetworkName.SEPOLIA]: ethers.parseEther('0.001'), // 0.001 ETH
-    [NetworkName.SOLANA_DEVNET]: BigInt(10000000), // 0.001 SOL in lamports
+    [NetworkName.SOLANA_DEVNET]: BigInt(1000000), // 0.001 SOL in lamports
   };
 
   constructor(providerConfig: Map<NetworkName, NetworkProvider>) {
@@ -196,6 +197,11 @@ export abstract class BaseSwapProvider implements ISwapProvider {
       balance = await provider.getBalance(walletAddress);
     }
 
+    //convert if type of balance is number
+    if (typeof balance === 'number') {
+      balance = BigInt(balance);
+    }
+
     const gasBuffer = this.getGasBuffer(network);
 
     // Check if user has enough balance for amount + gas buffer
@@ -203,24 +209,24 @@ export abstract class BaseSwapProvider implements ISwapProvider {
       // If not enough balance for both, ensure at least gas buffer is available
       if (amountBN <= gasBuffer) {
         throw new Error(
-          `Amount too small. Minimum amount should be greater than ${ethers.formatEther(gasBuffer)} native token to cover gas`,
+          `Amount too small. Minimum amount should be greater than ${ethers.formatUnits(gasBuffer, decimals)} native token to cover gas`,
         );
       }
       // Subtract gas buffer from amount
       const adjustedAmountBN = amountBN - gasBuffer;
       const adjustedAmount = ethers.formatUnits(adjustedAmountBN, decimals);
-      console.log(
+      logger.info(
         '🤖 Adjusted amount for gas buffer:',
-        adjustedAmount,
-        `(insufficient balance for full amount + ${ethers.formatEther(gasBuffer)} gas)`,
+        `${ethers.formatUnits(amountBN, decimals)}`,
+        `(insufficient balance for full amount + ${ethers.formatUnits(gasBuffer, decimals)} gas)`,
       );
       return adjustedAmount;
     }
 
-    console.log(
+    logger.info(
       '🤖 Using full amount:',
       amount,
-      `(sufficient balance for amount + ${ethers.formatEther(gasBuffer)} gas)`,
+      `(sufficient balance for amount + ${ethers.formatUnits(gasBuffer, decimals)} gas)`,
     );
     return amount;
   }
@@ -331,7 +337,7 @@ export abstract class BaseSwapProvider implements ISwapProvider {
             const formattedBalance = ethers.formatUnits(nativeBalance, 9);
             return {
               isValid: false,
-              message: `Insufficient SOL for gas fees. Required: ~${ethers.formatUnits(gasBuffer, 9)}, Available: ${formattedBalance}`,
+              message: `Insufficient SOL for gas fees. Required: ~${ethers.formatUnits(gasBuffer, quote.fromToken.decimals)}, Available: ${formattedBalance}`,
             };
           }
         }
@@ -361,7 +367,7 @@ export abstract class BaseSwapProvider implements ISwapProvider {
             const formattedTotal = ethers.formatEther(totalRequired);
             return {
               isValid: false,
-              message: `Insufficient native token balance. Required: ${formattedRequired} (+ ~${ethers.formatEther(gasBuffer)} for gas = ${formattedTotal}), Available: ${formattedBalance}`,
+              message: `Insufficient native token balance. Required: ${formattedRequired} (+ ~${ethers.formatUnits(gasBuffer, quote.fromToken.decimals)} for gas = ${formattedTotal}), Available: ${formattedBalance}`,
             };
           }
         } else {
@@ -391,7 +397,7 @@ export abstract class BaseSwapProvider implements ISwapProvider {
             const formattedBalance = ethers.formatEther(nativeBalance);
             return {
               isValid: false,
-              message: `Insufficient native token for gas fees. Required: ~${ethers.formatEther(gasBuffer)}, Available: ${formattedBalance}`,
+              message: `Insufficient native token for gas fees. Required: ~${ethers.formatUnits(gasBuffer, quote.fromToken.decimals)}, Available: ${formattedBalance}`,
             };
           }
         }
@@ -399,7 +405,7 @@ export abstract class BaseSwapProvider implements ISwapProvider {
 
       return { isValid: true };
     } catch (error) {
-      console.error('Error checking balance:', error);
+      logger.error('Error checking balance:', error);
       return {
         isValid: false,
         message: `Failed to check balance: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -505,7 +511,7 @@ export abstract class BaseSwapProvider implements ISwapProvider {
         lastValidBlockHeight: storedData.quote.tx?.lastValidBlockHeight,
       };
     } catch (error) {
-      console.error('Error building swap transaction:', error);
+      logger.error('Error building swap transaction:', error);
       throw new Error(
         `Failed to build swap transaction: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -558,7 +564,7 @@ export abstract class BaseSwapProvider implements ISwapProvider {
         return adjustTokenAmount(amount, formattedBalance, decimals, this.TOLERANCE_PERCENTAGE);
       }
     } catch (error) {
-      console.error('Error in adjustAmount:', error);
+      logger.error('Error in adjustAmount:', error);
       // In case of any error, return the original amount
       return amount;
     }
@@ -613,7 +619,7 @@ export abstract class BaseSwapProvider implements ISwapProvider {
           }
         }
       } catch (error) {
-        console.error('Error cleaning up caches:', error);
+        logger.error('Error cleaning up caches:', error);
       }
     }, CLEANUP_INTERVAL);
   }

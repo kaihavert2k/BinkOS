@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { IToolConfig } from './types';
 import { BaseTool } from './BaseTool';
 import { createNetworkSchema } from './schemas';
-
+import { CustomDynamicStructuredTool } from './types';
 export class FinishTool extends BaseTool {
   getName(): string {
     return 'terminate';
@@ -25,7 +25,7 @@ export class FinishTool extends BaseTool {
     );
   }
 
-  createTool(): DynamicStructuredTool {
+  createTool(): CustomDynamicStructuredTool {
     return new DynamicStructuredTool({
       name: this.getName(),
       description: this.getDescription(),

@@ -9,12 +9,17 @@ import {
   NetworkType,
   settings,
   Wallet,
+  logger,
+  OpenAIModel,
 } from '@binkai/core';
 import { TokenPlugin } from '@binkai/token-plugin';
 import { WalletPlugin } from '@binkai/wallet-plugin';
 import { ethers } from 'ethers';
 
 async function main() {
+  //configure enable logger
+  logger.enable();
+
   // Define available networks
   const BNB_RPC = 'https://bsc-dataseed1.binance.org';
   const ETH_RPC = 'https://eth.llamarpc.com';
@@ -92,10 +97,17 @@ async function main() {
   console.log('🤖 Wallet SOL:', await wallet.getAddress(NetworkName.SOLANA));
   // Create an agent with OpenAI
   console.log('🤖 Initializing AI agent...');
+  const llm = new OpenAIModel({
+    apiKey: settings.get('OPENAI_API_KEY') || '',
+    model: 'gpt-4o-mini',
+  });
+
   const agent = new Agent(
+    llm,
     {
-      model: 'gpt-4.1',
       temperature: 0,
+      systemPrompt:
+        'You are a BINK AI agent. You are able to perform bridge and get token information on multiple chains. If you do not have the token address, you can use the symbol to get the token information before performing a bridge.',
     },
     wallet,
     networks,
@@ -124,7 +136,7 @@ async function main() {
   // Initialize plugin with provider
   await walletPlugin.initialize({
     defaultChain: 'bnb',
-    providers: [bnbProvider, alchemyProvider, birdeyeProvider, solanaProvider],
+    providers: [alchemyProvider, birdeyeProvider, solanaProvider],
     supportedChains: ['bnb', 'solana'],
   });
 
@@ -145,8 +157,7 @@ async function main() {
 
   // Execute token transfer through natural language
   const result = await agent.execute({
-    input:
-      'send 0.01 USDT(Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB) to wallet() on solana',
+    input: 'send 0.01 USDT(Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB) to wallet() on solana',
   });
   console.log('🤖 Result:', result);
 }

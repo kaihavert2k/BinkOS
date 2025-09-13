@@ -10,6 +10,7 @@ import {
   ErrorStep,
   EVM_NATIVE_TOKEN_ADDRESS,
   NetworkName,
+  logger,
 } from '@binkai/core';
 import { ProviderRegistry } from './ProviderRegistry';
 import { ISwapProvider, SwapQuote, SwapParams } from './types';
@@ -41,7 +42,7 @@ export class SwapTool extends BaseTool {
 
   registerProvider(provider: ISwapProvider): void {
     this.registry.registerProvider(provider);
-    console.log('✓ Provider registered', provider.constructor.name);
+    logger.info('✓ Provider registered', provider.constructor.name);
     // Add provider's supported networks
     provider.getSupportedNetworks().forEach(network => {
       this.supportedNetworks.add(network);
@@ -144,11 +145,11 @@ export class SwapTool extends BaseTool {
     const quotes = await Promise.all(
       providers.map(async (provider: ISwapProvider) => {
         try {
-          console.log('🤖 Getting quote from', provider.getName());
+          logger.info('🤖 Getting quote from', provider.getName());
           const quote = await provider.getQuote(params, userAddress);
           return { provider, quote };
         } catch (error: any) {
-          console.warn(`Failed to get quote from ${provider.getName()}:`, error);
+          logger.warn(`Failed to get quote from ${provider.getName()}:`, error);
           return null;
         }
       }),
@@ -347,12 +348,11 @@ export class SwapTool extends BaseTool {
         }
       }
     } catch (error: any) {
-      console.warn(`Failed to get quote:`, error);
+      logger.warn(`Failed to get quote:`, error);
       throw error;
     }
 
-    console.log('🤖 The selected provider is:', selectedProvider.getName());
-
+    logger.info('🤖 The selected provider is:', selectedProvider.getName());
     onProgress?.({
       progress: 10,
       message: `Verifying you have sufficient ${quote.fromToken.symbol || 'tokens'} for this swap.`,
@@ -379,10 +379,10 @@ export class SwapTool extends BaseTool {
   }
 
   async simulateQuoteTool(args: any): Promise<SwapQuote> {
-    console.log('🚀 ~ SwapTool ~ simulateQuoteTool ~ args:', args);
+    logger.info('🚀 ~ SwapTool ~ simulateQuoteTool ~ args:', args);
     if (this.agent.isMockResponseTool()) {
       const mockResponse = await this.mockResponseTool(args);
-      console.log('🤖 Mock response:', mockResponse);
+      logger.info('🤖 Mock response:', mockResponse);
       return JSON.parse(mockResponse);
     }
     return (await this.getQuote(args)).quote;
@@ -406,7 +406,8 @@ export class SwapTool extends BaseTool {
   }
 
   createTool(): CustomDynamicStructuredTool {
-    console.log('✓ Creating tool', this.getName());
+    logger.info(`✓ Creating tool ${this.getName()}`);
+
     return {
       name: this.getName(),
       description: this.getDescription(),
@@ -438,8 +439,7 @@ export class SwapTool extends BaseTool {
             return this.mockResponseTool(args);
           }
 
-          console.log('🔄 Doing swap operation...');
-          console.log('🤖 Swap Args:', args);
+          logger.info('🤖 Swap Args:', args);
 
           const { selectedProvider, quote, userAddress } = await this.getQuote(args, onProgress);
           onProgress?.({
@@ -473,8 +473,7 @@ export class SwapTool extends BaseTool {
 
               const requiredAmount = parseTokenAmount(quote.fromAmount, quote.fromToken.decimals);
 
-              console.log('🤖 Allowance: ', allowance, ' Required amount: ', requiredAmount);
-
+              logger.info('🤖 Allowance: ', allowance, ' Required amount: ', requiredAmount);
               if (allowance < requiredAmount) {
                 try {
                   const approveTx = await selectedProvider.buildApproveTransaction(
@@ -498,7 +497,7 @@ export class SwapTool extends BaseTool {
                     value: BigInt(approveTx.value),
                   });
 
-                  console.log('🤖 ApproveReceipt:', approveReceipt);
+                  logger.info('🤖 ApproveReceipt:', approveReceipt);
 
                   // Wait for approval to be mined
                   await approveReceipt.wait();
@@ -511,7 +510,7 @@ export class SwapTool extends BaseTool {
             }
           }
 
-          console.log('🤖 Swapping...');
+          logger.info('🤖 Swapping...');
 
           onProgress?.({
             progress: 80,
@@ -542,7 +541,7 @@ export class SwapTool extends BaseTool {
             selectedProvider.invalidateBalanceCache(quote.fromToken.address, userAddress, network);
             selectedProvider.invalidateBalanceCache(quote.toToken.address, userAddress, network);
           } catch (error: any) {
-            console.error('Error clearing token balance caches:', error);
+            logger.error('Error clearing token balance caches:', error);
             // Non-critical error, don't throw
           }
 
@@ -572,7 +571,7 @@ export class SwapTool extends BaseTool {
 
           return JSON.stringify(result);
         } catch (error: any) {
-          console.error('Swap error:', error);
+          logger.error('Swap error:', error);
 
           // Special handling for token validation errors that we can try to fix
           if (
@@ -600,7 +599,7 @@ export class SwapTool extends BaseTool {
 
   // Helper method to attempt fixing token addresses
   private async attemptTokenAddressFix(args: any, error: any): Promise<string> {
-    console.log('🔍 Fixing token addresses in Swap...');
+    logger.info('🔍 Fixing token addresses in Swap...');
 
     // Determine which token has the error
     const isFromTokenAddressError =
@@ -616,7 +615,7 @@ export class SwapTool extends BaseTool {
 
     // Add null check for tokenInfos
     if (!tokenInfos) {
-      console.log(`❌ No token information found for network ${args.network}`);
+      logger.error(`❌ No token information found for network ${args.network}`);
       return this.handleError(
         this.createError(
           ErrorStep.TOKEN_NOT_FOUND,
@@ -634,7 +633,7 @@ export class SwapTool extends BaseTool {
     if (isFromTokenAddressError) {
       for (const [address, tokenInfo] of Object.entries(tokenInfos) as [string, TokenInfo][]) {
         if (tokenInfo.symbol.toLowerCase() === args.fromToken.toLowerCase()) {
-          console.log(`🔍 Found correct address for ${args.fromToken}: ${address}`);
+          logger.info(`🔍 Found correct address for ${args.fromToken}: ${address}`);
           updatedArgs.fromToken = address;
           foundCorrectAddress = true;
           break;
@@ -645,7 +644,7 @@ export class SwapTool extends BaseTool {
     if (isToTokenAddressError) {
       for (const [address, tokenInfo] of Object.entries(tokenInfos) as [string, TokenInfo][]) {
         if (tokenInfo.symbol.toLowerCase() === args.toToken.toLowerCase()) {
-          console.log(`🔍 Found correct address for ${args.toToken}: ${address}`);
+          logger.info(`🔍 Found correct address for ${args.toToken}: ${address}`);
           updatedArgs.toToken = address;
           foundCorrectAddress = true;
           break;
@@ -655,12 +654,12 @@ export class SwapTool extends BaseTool {
 
     // Retry the operation with corrected addresses if found
     if (foundCorrectAddress) {
-      console.log('🔄 Retrying with corrected token address...');
+      logger.info('🔄 Retrying with corrected token address...');
       try {
         const result = await this.createTool().func(updatedArgs);
         return result;
       } catch (retryError) {
-        console.error('Error during retry:', retryError);
+        logger.error('Error during retry:', retryError);
         return this.handleError(
           this.createError(
             ErrorStep.TOKEN_NOT_FOUND,

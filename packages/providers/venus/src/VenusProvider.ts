@@ -6,7 +6,7 @@ import {
 } from '@binkai/staking-plugin';
 import { ethers, Contract, Provider } from 'ethers';
 import { VenusPoolABI } from './abis/VenusPool';
-import { EVM_NATIVE_TOKEN_ADDRESS, NetworkName, Token } from '@binkai/core';
+import { EVM_NATIVE_TOKEN_ADDRESS, NetworkName, Token, logger } from '@binkai/core';
 import { isSolanaNetwork } from '@binkai/staking-plugin';
 import { isWithinTolerance, parseTokenAmount } from '@binkai/staking-plugin';
 
@@ -157,7 +157,7 @@ export class VenusProvider extends BaseStakingProvider {
       decimals: token.decimals,
       symbol: token.symbol,
     };
-    console.log('🤖 Venus token info:', tokenInfo);
+    logger.info('🤖 Venus token info:', tokenInfo);
     return tokenInfo;
   }
 
@@ -195,7 +195,7 @@ export class VenusProvider extends BaseStakingProvider {
         );
 
         if (adjustedAmount !== params.amountA) {
-          console.log(`🤖 Venus adjusted input amount from ${params.amountA} to ${adjustedAmount}`);
+          logger.info(`🤖 Venus adjusted input amount from ${params.amountA} to ${adjustedAmount}`);
         }
       }
 
@@ -223,7 +223,7 @@ export class VenusProvider extends BaseStakingProvider {
 
       return quote;
     } catch (error: unknown) {
-      console.error('Error getting quote:', error);
+      logger.error('Error getting quote:', error);
       throw new Error(
         `Failed to get quote: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -291,7 +291,7 @@ export class VenusProvider extends BaseStakingProvider {
         };
       }
     } catch (error) {
-      console.error('Error building staking transaction:', error);
+      logger.error('Error building staking transaction:', error);
       throw new Error(
         `Failed to build staking transaction: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -419,7 +419,7 @@ export class VenusProvider extends BaseStakingProvider {
 
       return { isValid: true };
     } catch (error) {
-      console.error('Error checking balance:', error);
+      logger.error('Error checking balance:', error);
       return {
         isValid: false,
         message: `Failed to check balance: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -450,7 +450,7 @@ export class VenusProvider extends BaseStakingProvider {
         tokens: [vBNBInfo],
       };
     } catch (error) {
-      console.error('Error getting vBNB staking balance:', error);
+      logger.error('Error getting vBNB staking balance:', error);
       throw new Error(
         `Failed to get vBNB staking balance: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );

@@ -6,3 +6,5 @@ export * from './plugin';
 export * from './types';
 export * from './storage';
 export * from './utils';
+export * from './utils/Logger';
+export * from './model';

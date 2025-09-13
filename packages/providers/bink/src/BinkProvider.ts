@@ -6,7 +6,7 @@ import {
 } from '@binkai/knowledge-plugin';
 
 import { IImageProvider, CreateImageParams, CreateImageResponse } from '@binkai/image-plugin';
-
+import { logger } from '@binkai/core';
 export interface BinkProviderConfig {
   apiKey: string;
   baseUrl: string;
@@ -41,7 +41,7 @@ export class BinkProvider implements IKnowledgeProvider, IImageProvider {
       });
       return { sources: [{ content: response?.data?.data }] };
     } catch (error: any) {
-      console.error('error', error);
+      logger.error('error', error);
       if (axios.isAxiosError(error)) {
         throw new Error(`Bink API error: ${error.response?.data?.message || error.message}`);
       }

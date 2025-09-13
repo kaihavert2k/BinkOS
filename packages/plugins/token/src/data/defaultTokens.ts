@@ -108,6 +108,16 @@ export const defaultTokens: Partial<Record<NetworkName, Record<string, TokenInfo
       // logoURI: 'https://tokens.uniswap.org/images/ethereum.png',
       verified: true,
     },
+    // WETH
+    '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2': {
+      address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+      symbol: 'WETH',
+      name: 'Wrapped Ethereum',
+      decimals: 18,
+      network: NetworkName.ETHEREUM,
+      // logoURI: 'https://tokens.uniswap.org/images/ethereum.png',
+      verified: true,
+    },
     // USDT
     '0xdac17f958d2ee523a2206206994597c13d831ec7': {
       address: '0xdac17f958d2ee523a2206206994597c13d831ec7',

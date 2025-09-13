@@ -5,6 +5,7 @@ import {
   CustomDynamicStructuredTool,
   IToolConfig,
   ToolProgress,
+  logger,
 } from '@binkai/core';
 import { ProviderRegistry } from './ProviderRegistry';
 import { IStakingProvider, StakingQuote, StakingParams } from './types';
@@ -29,7 +30,7 @@ export class StakingTool extends BaseTool {
 
   registerProvider(provider: IStakingProvider): void {
     this.registry.registerProvider(provider);
-    console.log('✓ Provider registered', provider.constructor.name);
+    logger.info('✓ Provider registered', provider.constructor.name);
     // Add provider's supported networks
     provider.getSupportedNetworks().forEach(network => {
       this.supportedNetworks.add(network);
@@ -122,11 +123,11 @@ Provider-specific tokens:
     const quotes = await Promise.all(
       providers.map(async (provider: IStakingProvider) => {
         try {
-          console.log('🤖 Getting quote from', provider.getName());
+          logger.info('🤖 Getting quote from', provider.getName());
           const quote = await provider.getQuote(params, userAddress);
           return { provider, quote };
         } catch (error) {
-          console.warn(`Failed to get quote from ${provider.getName()}:`, error);
+          logger.warn(`Failed to get quote from ${provider.getName()}:`, error);
           return null;
         }
       }),
@@ -206,8 +207,8 @@ Provider-specific tokens:
         }
         quote = await selectedProvider.getQuote(stakingParams, userAddress);
       } catch (error) {
-        console.warn(`Failed to get quote from preferred provider ${preferredProvider}:`, error);
-        console.log('🔄 Falling back to checking all providers for best quote...');
+        logger.warn(`Failed to get quote from preferred provider ${preferredProvider}:`, error);
+        logger.info('🔄 Falling back to checking all providers for best quote...');
         const bestQuote = await this.findBestQuote(
           {
             ...stakingParams,
@@ -230,7 +231,7 @@ Provider-specific tokens:
       quote = bestQuote.quote;
     }
 
-    console.log('🤖 The selected provider is:', selectedProvider.getName());
+    logger.info('🤖 The selected provider is:', selectedProvider.getName());
 
     onProgress?.({
       progress: 20,
@@ -277,7 +278,7 @@ Provider-specific tokens:
     );
   }
   createTool(): CustomDynamicStructuredTool {
-    console.log('✓ Creating tool', this.getName());
+    logger.info('✓ Creating tool', this.getName());
     return {
       name: this.getName(),
       description: this.getDescription(),
@@ -299,7 +300,7 @@ Provider-specific tokens:
             provider: preferredProvider,
           } = args;
 
-          console.log('🤖 Staking Args:', args);
+          logger.info('🤖 Staking Args:', args);
 
           if (this.agent.isMockResponseTool()) {
             return this.mockResponseTool(args);
@@ -332,7 +333,7 @@ Provider-specific tokens:
 
           const requiredAmount = parseTokenAmount(quote.amountA, quote.tokenA.decimals);
 
-          console.log('🤖 Allowance: ', allowance, ' Required amount: ', requiredAmount);
+          logger.info('🤖 Allowance: ', allowance, ' Required amount: ', requiredAmount);
 
           if (allowance < requiredAmount) {
             const approveTx = await selectedProvider.buildApproveTransaction(
@@ -342,7 +343,7 @@ Provider-specific tokens:
               quote.amountA,
               userAddress,
             );
-            console.log('🤖 Approving...');
+            logger.info('🤖 Approving...');
 
             // Sign and send approval transaction
             onProgress?.({
@@ -356,12 +357,12 @@ Provider-specific tokens:
               value: BigInt(approveTx.value),
             });
 
-            console.log('🤖 ApproveReceipt:', approveReceipt);
+            logger.info('🤖 ApproveReceipt:', approveReceipt);
 
             // Wait for approval to be mined
             await approveReceipt.wait();
           }
-          console.log('🤖 Staking...');
+          logger.info('🤖 Staking...');
 
           onProgress?.({
             progress: 80,
@@ -395,7 +396,7 @@ Provider-specific tokens:
             network,
           });
         } catch (error) {
-          console.error('Staking error:', error);
+          logger.error('Staking error:', error);
           return JSON.stringify({
             status: 'error',
             message: error,

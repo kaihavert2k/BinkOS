@@ -13,28 +13,28 @@ import { MessageEntity } from '../types';
 import { EVM_NATIVE_TOKEN_ADDRESS, SOL_NATIVE_TOKEN_ADDRESS } from '../network';
 import { CallbackManager, IToolExecutionCallback } from './callbacks';
 import { CompiledStateGraph } from '@langchain/langgraph';
+import { IModel } from '../model/types';
 
 export class Agent extends BaseAgent {
-  protected model: ChatOpenAI;
+  protected model: IModel;
   private wallet: IWallet;
   private executor!: AgentExecutor;
   private networks: NetworksConfig['networks'];
   protected db: DatabaseAdapter<any> | undefined;
   protected context: AgentContext = {};
   public readonly config: AgentConfig;
-
-  constructor(config: AgentConfig, wallet: IWallet, networks: NetworksConfig['networks']) {
+  constructor(model: IModel, config: AgentConfig, wallet: IWallet, networks: NetworksConfig['networks']) {
     super();
+    this.model = model;
     this.wallet = wallet;
     this.networks = networks;
     this.config = config;
-    this.model = new ChatOpenAI({
-      modelName: config.model,
-      temperature: config.temperature ?? 0,
-      maxTokens: config.maxTokens,
-    });
 
     this.initializeDefaultTools();
+  }
+
+  getModel(): IModel {
+    return this.model;
   }
 
   getContext(): AgentContext {
@@ -166,7 +166,7 @@ export class Agent extends BaseAgent {
     ]);
 
     const agent = createOpenAIToolsAgent({
-      llm: this.model,
+      llm: this.getModel().getLangChainLLM(),
       tools: this.getTools(),
       prompt,
     });

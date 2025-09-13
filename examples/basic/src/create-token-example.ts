@@ -6,6 +6,8 @@ import {
   NetworkType,
   NetworksConfig,
   NetworkName,
+  logger,
+  OpenAIModel,
 } from '@binkai/core';
 import { TokenPlugin } from '@binkai/token-plugin';
 import { ethers } from 'ethers';
@@ -31,6 +33,12 @@ async function main() {
   }
 
   console.log('🔑 API keys found\n');
+
+  //configure enable logger
+  logger.enable();
+
+  // //configure disable logger
+  // logger.disable();
 
   // Define available networks
   console.log('📡 Configuring networks...');
@@ -86,10 +94,17 @@ async function main() {
 
   // Create an agent with OpenAI
   console.log('🤖 Initializing AI agent...');
+  const llm = new OpenAIModel({
+    apiKey: settings.get('OPENAI_API_KEY') || '',
+    model: 'gpt-4o-mini',
+  });
+
   const agent = new Agent(
+    llm,
     {
-      model: 'gpt-4o',
       temperature: 0,
+      systemPrompt:
+        'You are a BINK AI agent. You are able to perform bridge and get token information on multiple chains. If you do not have the token address, you can use the symbol to get the token information before performing a bridge.',
     },
     wallet,
     networks,

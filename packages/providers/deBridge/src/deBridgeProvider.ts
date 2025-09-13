@@ -21,6 +21,7 @@ import {
   SOL_NATIVE_TOKEN_ADDRESS,
   SOL_NATIVE_TOKEN_ADDRESS2,
   Token,
+  logger,
 } from '@binkai/core';
 import { NetworkProvider } from '@binkai/bridge-plugin/src/BaseBridgeProvider';
 import { BridgeQuote, Transaction } from '@binkai/bridge-plugin/src/types';
@@ -124,7 +125,7 @@ export class deBridgeProvider extends BaseBridgeProvider {
         );
 
         if (adjustedAmount !== params.amount) {
-          console.log(
+          logger.info(
             `🤖 deBridge adjusted input amount from ${params.amount} to ${adjustedAmount}`,
           );
         }
@@ -171,7 +172,7 @@ export class deBridgeProvider extends BaseBridgeProvider {
       this.storeQuote(quote);
       return quote;
     } catch (e) {
-      console.error('Error getting quote:', e);
+      logger.error('Error getting quote:', e);
       throw new Error(`Failed to get quote: ${e instanceof Error ? e.message : 'Unknown error'}`);
     }
   }
@@ -185,7 +186,7 @@ export class deBridgeProvider extends BaseBridgeProvider {
     adjustedAmount: string,
   ): Promise<Transaction> {
     try {
-      console.log('🚀 ~ deBridgeProvider ~ buildBridgeData: ~ params:', params);
+      logger.info('🚀 ~ deBridgeProvider ~ buildBridgeData: ~ params:', params);
 
       const srcChainId = MAPPING_CHAIN_ID[params.fromNetwork as SupportedChain];
       const srcChainTokenIn =
@@ -244,7 +245,7 @@ export class deBridgeProvider extends BaseBridgeProvider {
         amountOut: data?.estimation?.dstChainTokenOut?.amount,
       };
     } catch (e) {
-      console.error('Error building bridge data:', e);
+      logger.error('Error building bridge data:', e);
       throw new Error(
         `Failed to build bridge data: ${e instanceof Error ? e.message : 'Unknown error'}`,
       );

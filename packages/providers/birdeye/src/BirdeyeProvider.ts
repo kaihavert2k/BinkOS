@@ -335,6 +335,7 @@ export class BirdeyeProvider implements ITokenProvider, IWalletProvider {
           decimals: token.decimals,
           usdValue: token.priceUsd * token.uiAmount,
           balance: token.uiAmount,
+          network: network,
         })),
       };
     } catch (error) {

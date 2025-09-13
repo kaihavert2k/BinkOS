@@ -19,10 +19,11 @@ import {
 export class ExtensionWallet implements IWallet {
   socket: Socket | null = null;
   readonly #network: Network;
-  readonly timeout: number = 30000; // 30 seconds timeout
+  readonly timeout: number;
 
-  constructor(network: Network) {
+  constructor(network: Network, timeout: number = 120000) {
     this.#network = network;
+    this.timeout = timeout;
   }
 
   public async connect(socket: Socket): Promise<void> {
@@ -48,7 +49,9 @@ export class ExtensionWallet implements IWallet {
   public async getAddress(network: NetworkName): Promise<string> {
     await this.ensureConnection();
 
-    const response = (await this.socket?.timeout(5000).emitWithAck('get_address', { network })) as {
+    const response = (await this.socket
+      ?.timeout(this.timeout)
+      .emitWithAck('get_address', { network })) as {
       address?: string;
       error?: string;
     };
@@ -64,7 +67,9 @@ export class ExtensionWallet implements IWallet {
   public async signMessage(params: SignMessageParams): Promise<string> {
     await this.ensureConnection();
 
-    const response = (await this.socket?.timeout(5000).emitWithAck('sign_message', params)) as {
+    const response = (await this.socket
+      ?.timeout(this.timeout)
+      .emitWithAck('sign_message', params)) as {
       signature?: string;
       error?: string;
     };
@@ -90,10 +95,11 @@ export class ExtensionWallet implements IWallet {
       transactionStr = Buffer.from(params.transaction.serialize()).toString('base64');
     }
 
-    const response = (await this.socket?.timeout(5000).emitWithAck('sign_transaction', {
+    const response = (await this.socket?.timeout(this.timeout).emitWithAck('sign_transaction', {
       network: params.network,
       transaction: transactionStr,
     })) as { signedTransaction?: string; error?: string };
+
     if (response.error) {
       throw new Error(response.error);
     }
@@ -131,26 +137,27 @@ export class ExtensionWallet implements IWallet {
     const networkConfig = this.#network.getConfig(network);
 
     if (networkType === 'evm') {
-      const provider = new ethers.JsonRpcProvider(networkConfig.config.rpcUrl);
-
-      const tx = await provider.broadcastTransaction(signedTransaction.transaction);
-
-      const receipt = await tx.wait();
-      if (!receipt) throw new Error('Transaction failed');
-
+      const response = await this.socket?.timeout(this.timeout).emitWithAck('send_transaction', {
+        network,
+        transaction: signedTransaction.transaction,
+      });
+      const provider = this.#network.getProvider(network, 'evm');
+      const tx = await provider.getTransaction(response.tx_hash);
+      if (response.error) {
+        throw new Error(response.error);
+      }
+      if (!response.tx_hash) {
+        throw new Error('No tx_hash found');
+      }
       return {
-        hash: tx.hash,
+        hash: response.tx_hash,
         wait: async () => {
-          const finalReceipt = await tx.wait();
-          if (!finalReceipt) throw new Error('Transaction failed');
+          await tx?.wait();
           return {
-            hash: finalReceipt.hash,
-            wait: async () => ({
-              hash: finalReceipt.hash,
-              wait: async () => {
-                throw new Error('Already waited');
-              },
-            }),
+            hash: response.tx_hash,
+            wait: async () => {
+              throw new Error('Already waited');
+            },
           };
         },
       };
@@ -266,16 +273,12 @@ export class ExtensionWallet implements IWallet {
         value: transaction.value,
         gasLimit: transaction.gasLimit,
       });
-
       tx.from = null;
 
-      const signedTx = await this.signTransaction({
-        network,
-        transaction: EvmTransaction.from(tx),
-      });
+      const transactionStr = EvmTransaction.from(tx).unsignedSerialized;
 
       // Send signed transaction
-      const sentTx = await this.sendTransaction(network, { transaction: signedTx });
+      const sentTx = await this.sendTransaction(network, { transaction: transactionStr });
       const receipt = await sentTx.wait();
       if (!receipt) throw new Error('Transaction failed');
 

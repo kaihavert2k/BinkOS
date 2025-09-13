@@ -1,6 +1,6 @@
 {
   "name": "@binkai/core",
-  "version": "0.2.7-alpha.2",
+  "version": "0.3.1-alpha.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "repository": {
@@ -19,13 +19,17 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "jest",
+    "test": "vitest run tests/planning.test.ts",
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@langchain/anthropic": "^0.3.20",
     "@langchain/community": "^0.3.36",
     "@langchain/core": "^0.3.42",
+    "@langchain/groq": "^0.2.2",
     "@langchain/langgraph": "^0.2.56",
+    "@langchain/mistralai": "^0.2.0",
+    "@langchain/ollama": "^0.2.0",
     "@langchain/openai": "^0.4.5",
     "@solana/web3.js": "^1.98.0",
     "bip39": "^3.1.0",
@@ -38,6 +42,7 @@
     "socket.io": "^4.8.1",
     "tweetnacl": "^1.0.3",
     "uuid": "^10.0.0",
+    "vitest": "^3.0.5",
     "zod": "^3.24.1"
   },
   "devDependencies": {

@@ -8,6 +8,7 @@ import {
   ErrorStep,
   StructuredError,
   NetworkName,
+  logger,
 } from '@binkai/core';
 import { ProviderRegistry } from './ProviderRegistry';
 import { IWalletProvider, WalletInfo } from './types';
@@ -68,7 +69,7 @@ export class GetWalletBalanceTool extends BaseTool {
 
   registerProvider(provider: IWalletProvider): void {
     this.registry.registerProvider(provider);
-    console.log('🔌 Provider registered:', provider.constructor.name);
+    logger.info('🔌 Provider registered:', provider.constructor.name);
     provider?.getSupportedNetworks().forEach(network => {
       this.supportedNetworks.add(network);
     });
@@ -142,7 +143,7 @@ export class GetWalletBalanceTool extends BaseTool {
   }
 
   createTool(): CustomDynamicStructuredTool {
-    console.log('🛠️ Creating wallet balance tool');
+    logger.info('🛠️ Creating wallet balance tool');
     return {
       name: this.getName(),
       description: this.getDescription(),
@@ -156,12 +157,12 @@ export class GetWalletBalanceTool extends BaseTool {
         try {
           const network = args.network;
           let address = args.address;
-          console.log(`🔍 Getting wallet balance for ${address || 'agent wallet'} on ${network}`);
+          logger.info(`🔍 Getting wallet balance for ${address || 'agent wallet'} on ${network}`);
 
           // STEP 1: Validate network
           const supportedNetworks = this.getSupportedNetworks();
           if (!supportedNetworks.includes(network)) {
-            console.error(`❌ Network ${network} is not supported`);
+            logger.error(`❌ Network ${network} is not supported`);
             throw this.createError(
               ErrorStep.NETWORK_VALIDATION,
               `Network ${network} is not supported.`,
@@ -176,12 +177,12 @@ export class GetWalletBalanceTool extends BaseTool {
           try {
             // If no address provided, get it from the agent's wallet
             if (!address) {
-              console.log('🔑 No address provided, using agent wallet');
+              logger.info('🔑 No address provided, using agent wallet');
               address = await this.agent.getWallet().getAddress(network);
-              console.log(`🔑 Using agent wallet address: ${address}`);
+              logger.info(`🔑 Using agent wallet address: ${address}`);
             }
           } catch (error) {
-            console.error(`❌ Failed to get wallet address for network ${network}`);
+            logger.error(`❌ Failed to get wallet address for network ${network}`);
             throw error;
           }
 
@@ -193,7 +194,7 @@ export class GetWalletBalanceTool extends BaseTool {
           // STEP 3: Check providers
           const providers = this.registry.getProvidersByNetwork(network);
           if (providers.length === 0) {
-            console.error(`❌ No providers available for network ${network}`);
+            logger.error(`❌ No providers available for network ${network}`);
             throw this.createError(
               ErrorStep.PROVIDER_AVAILABILITY,
               `No providers available for network ${network}.`,
@@ -205,7 +206,7 @@ export class GetWalletBalanceTool extends BaseTool {
             );
           }
 
-          console.log(`🔄 Found ${providers.length} providers for network ${network}`);
+          logger.info(`🔄 Found ${providers.length} providers for network ${network}`);
 
           let results: WalletInfo = {};
           const errors: Record<string, string> = {};
@@ -213,13 +214,13 @@ export class GetWalletBalanceTool extends BaseTool {
           // STEP 4: Query providers
           // Try all providers and collect results
           for (const provider of providers) {
-            console.log(`🔄 Querying provider: ${provider.getName()}`);
+            logger.info(`🔄 Querying provider: ${provider.getName()}`);
             try {
               const data = await provider.getWalletInfo(address, network);
-              console.log(`✅ Successfully got data from ${provider.getName()}`);
+              logger.info(`✅ Successfully got data from ${provider.getName()}`);
               results = mergeObjects(results, data);
             } catch (error) {
-              console.warn(
+              logger.warn(
                 `⚠️ Failed to get wallet info from ${provider.getName()}: ${error instanceof Error ? error.message : error}`,
               );
               this.logError(
@@ -232,14 +233,14 @@ export class GetWalletBalanceTool extends BaseTool {
 
           // If no successful results, throw error
           if (Object.keys(results).length === 0) {
-            console.error(`❌ All providers failed for ${address}`);
+            logger.error(`❌ All providers failed for ${address}`);
             throw `All providers failed for ${address}`;
           }
 
-          console.log(`💰 Wallet info retrieved successfully for ${address}`);
+          logger.info(`💰 Wallet info retrieved successfully for ${address}`);
 
           if (Object.keys(errors).length > 0) {
-            console.warn(`⚠️ Some providers failed but we have partial results`);
+            logger.warn(`⚠️ Some providers failed but we have partial results`);
           }
 
           onProgress?.({
@@ -250,14 +251,14 @@ export class GetWalletBalanceTool extends BaseTool {
           // Add address to nativeBalance if it exists
           results = this.addAddressToNativeBalance(results, network);
 
-          console.log(`✅ Returning wallet balance data for ${address}`);
+          logger.info(`✅ Returning wallet balance data for ${address}`);
 
           if (results?.tokens && Array.isArray(results?.tokens)) {
             results.tokens = results.tokens.filter(token => {
               if (token?.symbol === 'BNB' || token?.symbol === 'ETH' || token?.symbol === 'SOL') {
                 return true;
               }
-              return Number(token?.balance) > 0.00001;
+              return Number(token?.usdValue) > 0.00001 && Number(token?.balance) > 0.00001;
             });
           }
 
@@ -269,7 +270,7 @@ export class GetWalletBalanceTool extends BaseTool {
             address,
           });
         } catch (error) {
-          console.error(
+          logger.error(
             '❌ Error in wallet balance tool:',
             error instanceof Error ? error.message : error,
           );

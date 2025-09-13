@@ -1,6 +1,6 @@
 import { SwapQuote, SwapParams, BaseSwapProvider, NetworkProvider } from '@binkai/swap-plugin';
 import { ethers, Provider } from 'ethers';
-import { EVM_NATIVE_TOKEN_ADDRESS, NetworkName, Token } from '@binkai/core';
+import { EVM_NATIVE_TOKEN_ADDRESS, NetworkName, Token, logger } from '@binkai/core';
 
 // Core system constants
 const CONSTANTS = {
@@ -74,7 +74,7 @@ export class KyberProvider extends BaseSwapProvider {
     userAddress: string,
   ) {
     const routePath = `api/v1/routes?tokenIn=${fromToken.address}&tokenOut=${toToken.address}&amountIn=${amount}&gasInclude=true`;
-    console.log('🤖 Kyber Path', routePath);
+    logger.info('🤖 Kyber Path', routePath);
     const routeResponse = await fetch(`${CONSTANTS.KYBER_API_BASE}${routePath}`);
     const routeData = await routeResponse.json();
 
@@ -107,7 +107,7 @@ export class KyberProvider extends BaseSwapProvider {
   ): Promise<string> {
     // Swap fromToken and toToken to get reverse quote
     const result = await this.callKyberApi(amount, toToken, fromToken, userAddress);
-    console.log('🚀 ~ KyberProvider ~ result:', result);
+    logger.info('🚀 ~ KyberProvider ~ result:', result);
     const outputAmount = result.transactionData.amountOut;
     return ethers.formatUnits(outputAmount, toToken.decimals);
   }
@@ -136,7 +136,7 @@ export class KyberProvider extends BaseSwapProvider {
         );
 
         if (adjustedAmount !== params.amount) {
-          console.log(`🤖 Kyber adjusted input amount from ${params.amount} to ${adjustedAmount}`);
+          logger.info(`🤖 Kyber adjusted input amount from ${params.amount} to ${adjustedAmount}`);
         }
       }
 
@@ -178,7 +178,7 @@ export class KyberProvider extends BaseSwapProvider {
       this.storeQuoteWithExpiry(swapQuote);
       return swapQuote;
     } catch (error: unknown) {
-      console.error('Error getting quote:', error);
+      logger.error('Error getting quote:', error);
       throw new Error(
         `Failed to get quote: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );

@@ -1,4 +1,4 @@
-import { EVM_NATIVE_TOKEN_ADDRESS, NetworkName, Token } from '@binkai/core';
+import { EVM_NATIVE_TOKEN_ADDRESS, NetworkName, Token, logger } from '@binkai/core';
 import { IBridgeProvider, BridgeQuote, BridgeParams, Transaction } from './types';
 import { ethers, Contract, Interface, Provider } from 'ethers';
 import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js';
@@ -63,7 +63,7 @@ export abstract class BaseBridgeProvider implements IBridgeProvider {
   }
 
   protected isSolanaProvider(provider: NetworkProvider): provider is Connection {
-    return provider instanceof Connection;
+    return 'getAccountInfo' in provider && 'getEpochInfo' in provider;
   }
 
   /**
@@ -221,18 +221,18 @@ export abstract class BaseBridgeProvider implements IBridgeProvider {
       // Subtract gas buffer from amount
       const adjustedAmountBN = amountBN - gasBuffer;
       const adjustedAmount = ethers.formatUnits(adjustedAmountBN, decimals);
-      console.log(
+      logger.info(
         '🤖 Adjusted amount for gas buffer:',
-        adjustedAmount,
-        `(insufficient balance for full amount + ${ethers.formatEther(gasBuffer)} gas)`,
+        `${ethers.formatUnits(amountBN, decimals)}`,
+        `(insufficient balance for full amount + ${ethers.formatUnits(gasBuffer, decimals)} gas)`,
       );
       return adjustedAmount;
     }
 
-    console.log(
+    logger.info(
       '🤖 Using full amount:',
       amount,
-      `(sufficient balance for amount + ${ethers.formatEther(gasBuffer)} gas)`,
+      `(sufficient balance for amount + ${ethers.formatUnits(gasBuffer, decimals)} gas)`,
     );
     return amount;
   }
@@ -378,7 +378,7 @@ export abstract class BaseBridgeProvider implements IBridgeProvider {
       }
       return { isValid: true };
     } catch (error) {
-      console.error('Error checking balance:', error);
+      logger.error('Error checking balance:', error);
       return {
         isValid: false,
         message: `Failed to check balance: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -415,7 +415,7 @@ export abstract class BaseBridgeProvider implements IBridgeProvider {
         lastValidBlockHeight: storedData.quote.tx?.lastValidBlockHeight,
       };
     } catch (error) {
-      console.error('Error building bridge transaction:', error);
+      logger.error('Error building bridge transaction:', error);
       throw new Error(
         `Failed to build bridge transaction: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -467,7 +467,7 @@ export abstract class BaseBridgeProvider implements IBridgeProvider {
         return adjustTokenAmount(amount, formattedBalance, decimals, this.TOLERANCE_PERCENTAGE);
       }
     } catch (error) {
-      console.error('Error in adjustAmount:', error);
+      logger.error('Error in adjustAmount:', error);
       // In case of any error, return the original amount
       return amount;
     }
@@ -515,7 +515,7 @@ export abstract class BaseBridgeProvider implements IBridgeProvider {
           }
         }
       } catch (error) {
-        console.error('Error cleaning up caches:', error);
+        logger.error('Error cleaning up caches:', error);
       }
     }, CLEANUP_INTERVAL);
   }

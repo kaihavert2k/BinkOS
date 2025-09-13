@@ -8,8 +8,7 @@ import {
 } from '@binkai/staking-plugin';
 import { ethers, Contract, Provider } from 'ethers';
 import { ListaPoolABI } from './abis/Lista';
-import { EVM_NATIVE_TOKEN_ADDRESS, NetworkName, Token } from '@binkai/core';
-import { isSolanaNetwork } from '@binkai/staking-plugin';
+import { EVM_NATIVE_TOKEN_ADDRESS, NetworkName, Token, logger } from '@binkai/core';
 import { isWithinTolerance, parseTokenAmount } from '@binkai/staking-plugin';
 
 export enum StakingOperationType {
@@ -27,6 +26,7 @@ const CONSTANTS = {
   BNB_ADDRESS: EVM_NATIVE_TOKEN_ADDRESS,
   SLISBNB_ADDRESS: '0xB0b84D294e0C75A6abe60171b70edEb2EFd14A1B',
   LISTA_CONTRACT_ADDRESS: '0x1adB950d8bB3dA4bE104211D5AB038628e477fE6',
+  LISTA_API_BASE_URL: 'https://api.lista.org',
 } as const;
 
 enum ChainId {
@@ -86,8 +86,43 @@ export class ListaProvider extends BaseStakingProvider {
       decimals: token.decimals,
       symbol: token.symbol,
     };
-    console.log('🤖 Lista token info:', tokenInfo);
+    logger.info('🤖 Lista token info:', tokenInfo);
     return tokenInfo;
+  }
+
+  private async fetchListaAPY(): Promise<{ currentAPY: string; averageAPY: string }> {
+    try {
+      const response = await fetch(`${CONSTANTS.LISTA_API_BASE_URL}/v1/stakes/latest-apr`, {
+        headers: {
+          accept: 'application/json, text/plain, */*',
+          'accept-language': 'en-US,en;q=0.9',
+          origin: 'https://lista.org',
+          referer: 'https://lista.org/',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch APY data: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (data.code !== '000000000') {
+        throw new Error(`API returned error: ${data.msg}`);
+      }
+
+      return {
+        currentAPY: data.data.apr,
+        averageAPY: data.data.apr,
+      };
+    } catch (error) {
+      logger.error('Error fetching Lista APY:', error);
+      // Return default values in case of error
+      return {
+        currentAPY: '0.01095',
+        averageAPY: '0.01095',
+      };
+    }
   }
 
   async getQuote(params: StakingParams, userAddress: string): Promise<StakingQuote> {
@@ -128,13 +163,17 @@ export class ListaProvider extends BaseStakingProvider {
         );
 
         if (adjustedAmount !== params.amountA) {
-          console.log(`🤖 Lista adjusted input amount from ${params.amountA} to ${adjustedAmount}`);
+          logger.info(`🤖 Lista adjusted input amount from ${params.amountA} to ${adjustedAmount}`);
         }
+      } else if (
+        params.type === StakingOperationType.WITHDRAW ||
+        params.type === StakingOperationType.UNSTAKE
+      ) {
+        adjustedAmount = Number(adjustedAmount).toFixed(7);
       }
-
       // Calculate input amount based on decimals
       const swapAmountA = BigInt(Math.floor(Number(adjustedAmount) * 10 ** tokenA.decimals));
-      console.log('🚀 ~ ListaProvider ~ getQuote ~ swapAmountA:', swapAmountA);
+      logger.info('🚀 ~ ListaProvider ~ getQuote ~ swapAmountA:', swapAmountA);
 
       const swapAmountB = params.amountB
         ? BigInt(Math.floor(Number(params.amountB) * 10 ** tokenB.decimals))
@@ -147,9 +186,12 @@ export class ListaProvider extends BaseStakingProvider {
         params.type as StakingOperationType,
       );
 
+      // Fetch current APY data from Lista API
+      const apyData = await this.fetchListaAPY();
+
       const swapTransactionData = {
-        currentAPY: '28.74',
-        averageAPY: '28.74',
+        currentAPY: apyData.currentAPY,
+        averageAPY: apyData.averageAPY,
         maxSupply: '0',
         totalSupplyMantissa: '0',
         liquidity: '0',
@@ -163,13 +205,13 @@ export class ListaProvider extends BaseStakingProvider {
         swapTransactionData,
         buildTransactionData,
       );
-      console.log('🚀 ~ ListaProvider ~ getQuote ~ quote:', quote);
+      logger.info('🚀 ~ ListaProvider ~ getQuote ~ quote:', quote);
 
       this.storeQuoteWithExpiry(quote);
 
       return quote;
     } catch (error: unknown) {
-      console.error('Error getting quote:', error);
+      logger.error('Error getting quote:', error);
       throw new Error(
         `Failed to get quote: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -204,16 +246,17 @@ export class ListaProvider extends BaseStakingProvider {
         };
       }
     } catch (error) {
-      console.error('Error building staking transaction:', error);
+      logger.error('Error building staking transaction:', error);
       throw new Error(
         `Failed to build staking transaction: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }
 
-  async buildClaimTransaction(uuid: bigint): Promise<Transaction> {
+  async buildClaimTransaction(uuid: string): Promise<Transaction> {
     try {
-      const txData = this.factory.interface.encodeFunctionData('claimWithdraw', [uuid]);
+      const uuidBigInt = BigInt(uuid);
+      const txData = this.factory.interface.encodeFunctionData('claimWithdraw', [uuidBigInt]);
 
       return {
         to: CONSTANTS.LISTA_CONTRACT_ADDRESS,
@@ -223,7 +266,7 @@ export class ListaProvider extends BaseStakingProvider {
         spender: CONSTANTS.LISTA_CONTRACT_ADDRESS,
       };
     } catch (error) {
-      console.error('Error building claim transaction:', error);
+      logger.error('Error building claim transaction:', error);
       throw new Error(
         `Failed to build claim transaction: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -348,7 +391,7 @@ export class ListaProvider extends BaseStakingProvider {
 
       return { isValid: true };
     } catch (error) {
-      console.error('Error checking balance:', error);
+      logger.error('Error checking balance:', error);
       return {
         isValid: false,
         message: `Failed to check balance: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -378,7 +421,7 @@ export class ListaProvider extends BaseStakingProvider {
         tokens: [slisBNBInfo],
       };
     } catch (error) {
-      console.error('Error getting slisBNB staking balance:', error);
+      logger.error('Error getting slisBNB staking balance:', error);
       throw new Error(
         `Failed to get slisBNB staking balance: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -393,6 +436,9 @@ export class ListaProvider extends BaseStakingProvider {
 
       // Convert the result to an array of objects with natural numbers
       const formattedBalances = claimableBalances.map((item: any) => {
+        //uuid
+        const uuid = item[0]?.toString();
+
         const amount = ethers.formatEther(item[1]);
 
         // Convert timestamp to days (seconds since epoch to days since request)
@@ -406,6 +452,7 @@ export class ListaProvider extends BaseStakingProvider {
         estimatedDate.setDate(currentDate.getDate() + 8);
 
         return {
+          uuid: uuid,
           claimableAmount: amount,
           estimatedTime: estimatedDate,
         };
@@ -416,7 +463,7 @@ export class ListaProvider extends BaseStakingProvider {
         tokens: formattedBalances,
       };
     } catch (error) {
-      console.error('Error getting claimable balances:', error);
+      logger.error('Error getting claimable balances:', error);
       throw new Error(
         `Failed to get claimable balances: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );

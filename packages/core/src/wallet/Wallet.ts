@@ -381,6 +381,9 @@ export class Wallet implements IWallet {
           throw new Error('Last valid block height is required');
         }
 
+        // Clear existing signatures before signing to avoid conflicts
+        tx.signatures = [];
+
         // Sign transaction
         tx.sign([this.#solanaKeypair]);
 
@@ -424,6 +427,10 @@ export class Wallet implements IWallet {
           tx.recentBlockhash = latestBlockhash.blockhash;
           tx.lastValidBlockHeight = latestBlockhash.lastValidBlockHeight;
         }
+
+        // Clear existing signatures before signing to avoid conflicts
+        tx.signatures = [];
+
         // Sign transaction
         tx.sign(this.#solanaKeypair);
 
